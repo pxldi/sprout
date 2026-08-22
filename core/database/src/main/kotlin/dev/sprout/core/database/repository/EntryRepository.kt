@@ -42,6 +42,10 @@ public class EntryRepository internal constructor(
     public fun observeOn(date: LocalDate): Flow<List<Entry>> =
         dao.observeOn(date).map { rows -> rows.map { it.toDomain() } }
 
+    /** Every live entry, grouped by habit — what the Today screen feeds to the scorer. */
+    public fun observeAllByHabit(): Flow<Map<String, List<Entry>>> =
+        dao.observeAll().map { rows -> rows.map { it.toDomain() }.groupBy(Entry::habitId) }
+
     public suspend fun find(habitId: String, date: LocalDate): Entry? =
         dao.findOn(habitId, date)?.toDomain()
 

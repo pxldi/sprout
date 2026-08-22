@@ -1,12 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-  Every user-visible string lives here so the copy rules in docs/02-app-design.md
-  can be reviewed in one place. Never: "You broke your streak" / "You failed" /
-  "Don't let Sprout down". Misses are neutral; praise is specific and data-derived.
--->
+<!-- User-visible copy lives in core/ui/src/main/res/values/strings.xml — see the note there. -->
 <resources>
     <string name="app_name">Sprout</string>
-    <string name="today_title">Today</string>
-    <string name="today_empty">Day 1 of 66 — you already showed up by being here.</string>
-    <string name="miss_yesterday">Missed yesterday. One miss changes almost nothing — today does.</string>
 </resources>

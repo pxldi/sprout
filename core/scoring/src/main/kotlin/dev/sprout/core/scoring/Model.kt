@@ -81,4 +81,8 @@ public data class HabitProgress(
 ) {
     public fun outcomeOn(date: LocalDate): OccasionOutcome? =
         occasions.firstOrNull { date in it.occasion }?.outcome
+
+    /** Occasions that have actually been judged — the habit's age in chances taken. */
+    public val closedOccasions: Int
+        get() = occasions.count { it.outcome != OccasionOutcome.OPEN }
 }

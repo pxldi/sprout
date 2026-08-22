@@ -93,3 +93,43 @@ class StrengthScoreTest {
         assertEquals(StreakState.ACTIVE, result.streakState)
     }
 }
+
+class PlantStageTest {
+
+    @Test
+    fun `a new habit is a seed and grows one stage at a time`() {
+        val new = HabitScorer.evaluate(ScheduleRule.Daily, emptyList(), today = day(0))
+        assertEquals(PlantStage.SEED, new.plantStage())
+
+        // Strength after n perfect days: 3 -> 14.9, 4 -> 19.3, 14 -> 52.8, 24 -> 72.4.
+        assertEquals(PlantStage.SEED, stageAfter(perfectDays = 3), "just under the sprout threshold")
+        assertEquals(PlantStage.SPROUT, stageAfter(perfectDays = 4))
+        assertEquals(PlantStage.SAPLING, stageAfter(perfectDays = 14))
+        assertEquals(PlantStage.TREE, stageAfter(perfectDays = 24))
+    }
+
+    private fun stageAfter(perfectDays: Int): PlantStage =
+        HabitScorer.evaluate(ScheduleRule.Daily, completions(0, perfectDays), today = day(perfectDays))
+            .plantStage()
+
+    @Test
+    fun `strength alone cannot buy ingrained - it takes the 66 days the research asks for`() {
+        val strongButYoung = HabitScorer.evaluate(ScheduleRule.Daily, completions(0, 40), today = day(40))
+        assertTrue(strongButYoung.strength >= 85.0, "strength is there")
+        assertEquals(PlantStage.TREE, strongButYoung.plantStage(), "but the time is not")
+
+        val ingrained = HabitScorer.evaluate(ScheduleRule.Daily, completions(0, 70), today = day(70))
+        assertEquals(PlantStage.INGRAINED, ingrained.plantStage())
+    }
+
+    @Test
+    fun `one miss never knocks a habit back to seed`() {
+        val afterMiss = HabitScorer.evaluate(
+            ScheduleRule.Daily,
+            completions(0, 30),
+            today = day(31),
+            restDayPolicy = RestDayPolicy.DISABLED,
+        )
+        assertTrue(afterMiss.plantStage() >= PlantStage.SAPLING)
+    }
+}

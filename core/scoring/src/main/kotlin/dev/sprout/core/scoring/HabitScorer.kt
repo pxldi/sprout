@@ -105,15 +105,19 @@ private class Walk(
     private var runWasAlive = true
 
     fun step(occasion: Occasion) {
-        if (!occasion.isClosedOn(today)) {
-            resolved += ResolvedOccasion(occasion, OccasionOutcome.OPEN, 0, 0.0, null)
-            return
-        }
-
         val logged = datesIn(occasion).flatMap { entriesByDate[it].orEmpty() }
         val done = logged.count { it.status.isCompletion }
         val credit = (done.toDouble() / occasion.requiredCompletions).coerceIn(0.0, 1.0)
         val firstCompletion = logged.firstOrNull { it.status.isCompletion }?.date
+
+        // An occasion resolves the moment its target is met — waiting for midnight would mean
+        // strength rose a day late and, worse, that coming back after a miss went uncelebrated
+        // on the very day it happened.
+        val met = done >= occasion.requiredCompletions
+        if (!met && !occasion.isClosedOn(today)) {
+            resolved += ResolvedOccasion(occasion, OccasionOutcome.OPEN, done, credit, firstCompletion)
+            return
+        }
 
         val outcome = classify(occasion, logged, done)
         applyStrength(occasion, outcome, credit)

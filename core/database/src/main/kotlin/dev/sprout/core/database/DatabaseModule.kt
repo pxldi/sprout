@@ -5,6 +5,8 @@
 package dev.sprout.core.database
 
 import android.content.Context
+import androidx.annotation.VisibleForTesting
+import androidx.room.Room
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -31,7 +33,38 @@ public class SproutRepositories internal constructor(
     public val entries: EntryRepository,
     public val lapses: LapseRepository,
     public val reminders: ReminderRepository,
-)
+    private val close: () -> Unit = {},
+) {
+    /** Releases the underlying database. Only meaningful for the in-memory test stack. */
+    public fun close(): Unit = close.invoke()
+}
+
+/**
+ * An entirely in-memory stack, for tests in modules that cannot see this module's `internal`
+ * Room types (which is all of them).
+ *
+ * Shipping a test hook in production code is a real cost, paid deliberately: the alternative is
+ * making [SproutDatabase] and every DAO public purely so other modules' tests can build one.
+ * Room's own `inMemoryDatabaseBuilder` makes the same trade.
+ */
+@VisibleForTesting
+public fun inMemoryRepositories(context: Context, clock: Clock): SproutRepositories {
+    val db = Room.inMemoryDatabaseBuilder(context, SproutDatabase::class.java)
+        .allowMainThreadQueries()
+        // Run queries on the calling thread. Without this, a suspending DAO call hops to Room's
+        // own executor, which no test scheduler can track — so tests that assert after a write
+        // race it instead of waiting for it.
+        .setQueryExecutor(Runnable::run)
+        .setTransactionExecutor(Runnable::run)
+        .build()
+    return SproutRepositories(
+        habits = HabitRepository(db.habitDao(), clock),
+        entries = EntryRepository(db.entryDao(), clock),
+        lapses = LapseRepository(db.lapseDao(), clock),
+        reminders = ReminderRepository(db.reminderDao(), clock),
+        close = db::close,
+    )
+}
 
 @Module
 @InstallIn(SingletonComponent::class)

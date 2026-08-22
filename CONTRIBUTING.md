@@ -30,8 +30,8 @@ change, however good the code is.
 - `:core:scoring` and `:core:scheduling` are pure Kotlin with no Android dependencies. Changes
   there need tests, and the existing tests double as the specification — read them first.
 - Run `./gradlew test detekt` before opening a PR.
-- User-visible strings live in `app/src/main/res/values/strings.xml` so the copy rules can be
-  reviewed in one place.
+- User-visible strings live in `core/ui/src/main/res/values/strings.xml` — one file, so the copy
+  rules can be reviewed in one diff. `:app` holds only the launcher label.
 
 ## Translations
 

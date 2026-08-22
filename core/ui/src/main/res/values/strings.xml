@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  EVERY user-visible string in Sprout lives in this one file, on purpose: the copy rules in
+  docs/02-app-design.md are only reviewable if the copy is in one place.
+
+  Never: "You broke your streak" · "You failed" · "Don't let Sprout down" · any loss framing.
+  Misses are stated flatly and pointed at today. Praise is specific and comes from real numbers.
+-->
+<resources>
+
+    <string name="today_title">Today</string>
+    <string name="today_progress">%1$d of %2$d done</string>
+
+    <!-- Endowed progress: the first screen already credits them for showing up. -->
+    <string name="today_empty_title">Day 1 of 66</string>
+    <string name="today_empty_body">You already showed up by being here. Add the first habit when you\'re ready.</string>
+    <string name="today_add_habit">Add a habit</string>
+
+    <!-- The three things Today may say about a miss. There is no fourth. -->
+    <string name="note_missed_yesterday">Missed yesterday. One miss changes almost nothing — today does.</string>
+    <string name="note_repairable">Your run is paused. Doing this today picks it back up.</string>
+    <string name="note_bounced_back">You came back. That\'s the day that counts most.</string>
+
+    <string name="habit_strength_description">%1$s, strength %2$d of 100</string>
+    <string name="habit_run">%1$d in a row</string>
+    <string name="habit_best_run">best %1$d</string>
+    <string name="habit_rate_30">%1$d%% of the last 30 days</string>
+    <string name="habit_rest_days">%1$d rest days banked</string>
+
+    <string name="action_complete">Mark done</string>
+    <string name="action_undo">Undo</string>
+    <string name="action_more">More options</string>
+    <string name="action_skip">Skip today</string>
+    <string name="action_minimum">Did the smallest version</string>
+    <string name="action_clear">Clear today</string>
+    <string name="action_close">Close</string>
+
+    <string name="stage_seed">Seed</string>
+    <string name="stage_sprout">Sprout</string>
+    <string name="stage_sapling">Sapling</string>
+    <string name="stage_tree">Tree</string>
+    <string name="stage_ingrained">Ingrained</string>
+
+</resources>

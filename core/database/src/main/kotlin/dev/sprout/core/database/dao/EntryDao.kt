@@ -36,6 +36,16 @@ internal interface EntryDao {
     @Query("SELECT * FROM entry WHERE date = :date AND deleted_at IS NULL")
     fun observeOn(date: LocalDate): Flow<List<EntryEntity>>
 
+    /**
+     * Every live entry, for every habit.
+     *
+     * The strength score is an EMA walked from a habit's first entry, so scoring genuinely needs
+     * the whole history — a windowed query would restart the EMA at zero and understate a
+     * long-running habit. One query beats one per habit; a few thousand rows is nothing.
+     */
+    @Query("SELECT * FROM entry WHERE deleted_at IS NULL ORDER BY date ASC")
+    fun observeAll(): Flow<List<EntryEntity>>
+
     @Query("SELECT * FROM entry WHERE habit_id = :habitId AND date = :date AND deleted_at IS NULL")
     suspend fun findOn(habitId: String, date: LocalDate): EntryEntity?
 
