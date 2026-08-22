@@ -12,3 +12,9 @@ style:
     ignorePropertyDeclaration: true
     ignoreCompanionObjectPropertyDeclaration: true
     ignoreAnnotated: ['Composable']
+
+complexity:
+  LongParameterList:
+    # A parameter with a default costs the caller nothing — `log(id, date, DONE)` is a
+    # three-argument call whatever the signature says. Count only what callers must supply.
+    ignoreDefaultParameters: true

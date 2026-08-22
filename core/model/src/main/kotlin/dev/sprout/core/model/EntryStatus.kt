@@ -5,11 +5,14 @@
 package dev.sprout.core.model
 
 /**
- * What the user did on a scheduled occasion.
+ * What the user logged on a given day.
  *
- * [SKIP] is a deliberate, guilt-free opt-out (illness, travel). It is *neutral*: it neither
- * advances nor breaks anything. [MISS] is the absence of a log. Nothing here ever resets a
- * score to zero — see docs/02-app-design.md, principle 3.
+ * There is deliberately no `MISS` member. A miss is the *absence* of an entry, and it is derived
+ * by the scorer as [dev.sprout.core.scoring.OccasionOutcome.MISSED]. Storing it as well would let
+ * the two representations disagree — a row saying MISS on a day that also has a DONE row.
+ *
+ * [SKIP] is a deliberate, guilt-free opt-out (illness, travel). It is neutral: it neither advances
+ * nor breaks anything.
  */
 public enum class EntryStatus {
     /** Completed in full. */
@@ -18,13 +21,10 @@ public enum class EntryStatus {
     /** Completed at the habit's "smallest version that still counts". Counts as done. */
     DONE_MIN,
 
-    /** Deliberately skipped. Holds strength and the streak constant. */
+    /** Deliberately skipped. Holds strength and the run constant. */
     SKIP,
 
-    /** Not done. Decays strength; may be absorbed by a rest day or repaired within 48 h. */
-    MISS,
-
-    /** An AVOID/REDUCE habit's slip, logged on purpose. Treated as a miss for scoring. */
+    /** An AVOID/REDUCE habit's slip, logged on purpose. Scored as a miss. */
     LAPSE,
     ;
 
