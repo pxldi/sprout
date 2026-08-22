@@ -1,0 +1,14 @@
+# Overrides on top of detekt's defaults (buildUponDefaultConfig = true).
+# Kept deliberately small: if a rule fires, the first question is whether the code is wrong.
+
+naming:
+  FunctionNaming:
+    # @Composable functions are PascalCase by convention.
+    ignoreAnnotated: ['Composable']
+
+style:
+  MagicNumber:
+    # Colour literals and other named constants declared as properties are self-documenting.
+    ignorePropertyDeclaration: true
+    ignoreCompanionObjectPropertyDeclaration: true
+    ignoreAnnotated: ['Composable']

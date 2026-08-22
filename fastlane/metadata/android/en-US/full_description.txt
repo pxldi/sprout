@@ -1,0 +1,15 @@
+Sprout is a habit tracker built on what the evidence actually shows about forming habits — and on
+what it shows about the things that make trackers feel bad to use.
+
+Tracking is the active ingredient, so logging is one tap from a widget, a notification, or the app.
+
+Nothing ever resets to zero. Your headline number is a strength score that grows as you show up
+and dents — but never wipes — when you miss. Streaks come with slack: rest days that you earn by
+showing up, spent silently when you need them, and a 48-hour window to earn a run back.
+
+The day after a miss is the most rewarded day in the app. There are no guilt notifications, no
+"you lost your streak" messages, and misses are never coloured red.
+
+Every gamified mechanic has an off switch.
+
+No account. No analytics. No network access by default. Your data is a file you own.
