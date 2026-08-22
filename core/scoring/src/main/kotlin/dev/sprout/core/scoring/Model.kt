@@ -62,7 +62,7 @@ public data class ResolvedOccasion(
  * Everything the UI needs to show a habit without doing arithmetic of its own.
  *
  * Note what is *not* here: a single headline number that can hit zero. `strength` decays but
- * never resets, `bestRun` is permanent, and `completionRate30` is shown next to `currentRun`
+ * never resets, `bestRun` is permanent, and the recent fraction is shown next to `currentRun`
  * so no one number owns the narrative.
  */
 public data class HabitProgress(
@@ -70,7 +70,18 @@ public data class HabitProgress(
     val strength: Double,
     val currentRun: Int,
     val bestRun: Int,
-    val completionRate30: Double,
+    /**
+     * Completions over the last 30 days, and the chances that actually existed in that window.
+     *
+     * A fraction, never a percentage, and never over a fixed 30. A habit that is 26 days old
+     * has had 26 chances; "100% of the last 30 days" would claim four days it never lived
+     * through, and this app's whole argument is that its numbers mean exactly what they say.
+     *
+     * Neutral outcomes are in neither half: a skip was not a chance missed, and a rest day
+     * spent in the background has to stay invisible here or it stops being silent.
+     */
+    val recentCompletions: Int,
+    val recentChances: Int,
     val streakState: StreakState,
     val restDaysAvailable: Int,
     /** Set only while [streakState] is [StreakState.PAUSED]. */

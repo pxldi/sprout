@@ -112,8 +112,33 @@ class StreakSlackTest {
     }
 
     @Test
-    fun `thirty day completion rate is reported alongside the run`() {
+    fun `recent fraction is reported alongside the run`() {
+        // 24 done, then six days off. Two of those six are absorbed by the rest days those 24
+        // completions earned, so the honest denominator is 28 — not 30, and not 24.
         val result = HabitScorer.evaluate(daily, completions(0, 24), today = day(30))
-        assertEquals(24.0 / 30.0, result.completionRate30, 0.02)
+        assertEquals(24, result.recentCompletions)
+        assertEquals(28, result.recentChances)
+    }
+
+    @Test
+    fun `a habit younger than the window is measured against its own age`() {
+        // Ten days old, never missed. "100% of the last 30 days" would claim twenty days it
+        // has not lived through; the honest reading is ten of ten.
+        val result = HabitScorer.evaluate(daily, completions(0, 10), today = day(10))
+        assertEquals(10, result.recentCompletions)
+        assertEquals(10, result.recentChances)
+    }
+
+    @Test
+    fun `skips and spent rest days are in neither half of the fraction`() {
+        // Seven completions bank one rest day; day 7 is skipped and day 8 missed, which the
+        // rest day absorbs. Neither may show up as a chance the user failed to take.
+        val entries = completions(0, 7) + DayLog(day(7), EntryStatus.SKIP)
+        val result = HabitScorer.evaluate(daily, entries, today = day(9))
+
+        assertEquals(OccasionOutcome.SKIPPED, result.outcomeOn(day(7)))
+        assertEquals(OccasionOutcome.RESTED, result.outcomeOn(day(8)))
+        assertEquals(7, result.recentCompletions)
+        assertEquals(7, result.recentChances)
     }
 }

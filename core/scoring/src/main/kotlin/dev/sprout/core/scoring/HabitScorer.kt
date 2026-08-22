@@ -171,6 +171,7 @@ private class Walk(
 
     fun toProgress(): HabitProgress {
         val lastClosed = resolved.lastOrNull { it.outcome != OccasionOutcome.OPEN }
+        val recent = recentlyJudged()
         val state = when {
             lastClosed == null || lastClosed.outcome != OccasionOutcome.MISSED -> StreakState.ACTIVE
             stillRepairable(lastClosed.occasion) -> StreakState.PAUSED
@@ -180,7 +181,8 @@ private class Walk(
             strength = strength,
             currentRun = run,
             bestRun = max(best, run),
-            completionRate30 = completionRate(),
+            recentCompletions = recent.count { it.outcome == OccasionOutcome.COMPLETED },
+            recentChances = recent.size,
             streakState = state,
             restDaysAvailable = restDays,
             repairDeadline = lastClosed?.occasion
@@ -204,13 +206,18 @@ private class Walk(
         return previous.outcome == OccasionOutcome.MISSED || previous.outcome == OccasionOutcome.REPAIRED
     }
 
-    private fun completionRate(): Double {
+    /**
+     * Occasions in the window that were actually judged — completed or missed.
+     *
+     * Skips, rest days and repairs are deliberately excluded. Counting them would drag the
+     * fraction down and so make banked slack visible, which is the one thing it must not be.
+     */
+    private fun recentlyJudged(): List<ResolvedOccasion> {
         val windowStart = today.minusDays(RATE_WINDOW_DAYS)
-        val closed = resolved.filter {
-            it.outcome != OccasionOutcome.OPEN && !it.occasion.start.isBefore(windowStart)
+        return resolved.filter {
+            !it.occasion.start.isBefore(windowStart) &&
+                (it.outcome == OccasionOutcome.COMPLETED || it.outcome == OccasionOutcome.MISSED)
         }
-        if (closed.isEmpty()) return 0.0
-        return closed.count { it.outcome == OccasionOutcome.COMPLETED }.toDouble() / closed.size
     }
 }
 

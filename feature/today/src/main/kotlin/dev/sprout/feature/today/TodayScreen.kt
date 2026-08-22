@@ -4,6 +4,7 @@
  */
 package dev.sprout.feature.today
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,6 +16,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.outlined.EventBusy
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -24,8 +26,11 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -99,9 +104,10 @@ public fun TodayScreen(
         } else {
             LazyColumn(modifier = Modifier.padding(inner).fillMaxSize()) {
                 items(state.items, key = { it.habit.id }) { item ->
-                    HabitRow(
+                    SwipeableHabitRow(
                         item = item,
                         onToggle = { onToggle(item.habit.id) },
+                        onSkip = { onSkip(item.habit.id) },
                         onMore = { sheetFor = item },
                     )
                     HorizontalDivider()
@@ -119,6 +125,63 @@ public fun TodayScreen(
                 onClear = { onClear(item.habit.id); sheetFor = null },
             )
         }
+    }
+}
+
+/**
+ * Swipe left to skip today.
+ *
+ * The row is never actually dismissed — a skip is a neutral log, not a removal, and the habit
+ * belongs on the list either way. So the gesture confirms the action and then *refuses* the
+ * state change, springing the row back; the feedback is the "Skipped today" line appearing
+ * underneath. Skipping is reversible from the overflow sheet, which also stays as the path for
+ * anyone who cannot make the gesture.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SwipeableHabitRow(
+    item: TodayItem,
+    onToggle: () -> Unit,
+    onSkip: () -> Unit,
+    onMore: () -> Unit,
+) {
+    val swipeState = rememberSwipeToDismissBoxState(
+        confirmValueChange = { value ->
+            if (value == SwipeToDismissBoxValue.EndToStart) onSkip()
+            false
+        },
+    )
+    SwipeToDismissBox(
+        state = swipeState,
+        enableDismissFromStartToEnd = false,
+        backgroundContent = { SkipBackground() },
+    ) {
+        HabitRow(item = item, onToggle = onToggle, onMore = onMore)
+    }
+}
+
+@Composable
+private fun SkipBackground() {
+    Row(
+        modifier = Modifier
+            // Deliberately not the error colour. Skipping on purpose is a decision, not a failure.
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .padding(horizontal = 24.dp, vertical = 20.dp),
+        horizontalArrangement = Arrangement.End,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = Icons.Outlined.EventBusy,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
+            text = stringResource(R.string.action_skip),
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(start = 8.dp),
+        )
     }
 }
 
@@ -169,11 +232,27 @@ private fun RowSupport(item: TodayItem) {
         Text(
             text = buildString {
                 append(stringResource(R.string.habit_run, progress.currentRun))
-                append(" · ")
-                append(stringResource(R.string.habit_rate_30, (progress.completionRate30 * 100).roundToInt()))
+                // Omitted on day one: "done 0 of 0" is noise, not honesty.
+                if (progress.recentChances > 0) {
+                    append(" · ")
+                    append(
+                        stringResource(
+                            R.string.habit_recent,
+                            progress.recentCompletions,
+                            progress.recentChances,
+                        ),
+                    )
+                }
             },
             style = MaterialTheme.typography.bodySmall,
         )
+        if (item.isSkipped) {
+            Text(
+                text = stringResource(R.string.status_skipped),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
         item.gentleNote?.let { note ->
             Text(
                 text = stringResource(note.stringRes()),

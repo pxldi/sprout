@@ -105,7 +105,7 @@ Fresh-start nudges: the app suggests creating or restarting habits on Mondays, t
 
 ## Visual identity
 
-Material 3 with dynamic color (Material You) by default, with a calm, organic brand theme fallback (moss green primary, warm sand surfaces, never red for misses — misses are neutral grey). Plant/garden metaphor throughout (growth, seasons) instead of fire/flame streak iconography (Duolingo found the flame misread in India; fire also signals loss when extinguished). Motion: one orchestrated moment per completion; respects reduced-motion.
+Material 3 with a fixed brand palette by default — moss green primary, warm sand surfaces, bark and bloom accents, never red for misses (misses are neutral grey). Dynamic color (Material You) is available as an opt-in in Settings, not the default: the plant metaphor is the product, and a wallpaper-derived scheme can hand the app a red primary. Light/dark still follows the system. Plant/garden metaphor throughout (growth, seasons) instead of fire/flame streak iconography (Duolingo found the flame misread in India; fire also signals loss when extinguished). Motion: one orchestrated moment per completion; respects reduced-motion.
 
 ## Copy rules
 

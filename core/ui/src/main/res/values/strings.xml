@@ -24,7 +24,8 @@
     <string name="habit_strength_description">%1$s, strength %2$d of 100</string>
     <string name="habit_run">%1$d in a row</string>
     <string name="habit_best_run">best %1$d</string>
-    <string name="habit_rate_30">%1$d%% of the last 30 days</string>
+    <!-- A fraction, not a percentage: the denominator is the chances that really existed. -->
+    <string name="habit_recent">done %1$d of %2$d</string>
     <string name="habit_rest_days">%1$d rest days banked</string>
 
     <string name="action_complete">Mark done</string>
@@ -33,6 +34,9 @@
     <string name="action_skip">Skip today</string>
     <string name="action_minimum">Did the smallest version</string>
     <string name="action_clear">Clear today</string>
+
+    <!-- Shown after a skip so the gesture visibly did something. Stated, never scolded. -->
+    <string name="status_skipped">Skipped today</string>
     <string name="action_close">Close</string>
 
     <string name="stage_seed">Seed</string>
