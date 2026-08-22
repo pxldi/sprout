@@ -53,6 +53,14 @@ public data class TodayUiState(
     val items: List<TodayItem> = emptyList(),
     /** Whether *any* habit exists, scheduled today or not. */
     val hasAnyHabits: Boolean = false,
+    /**
+     * Whether a live habit has a reminder switched on.
+     *
+     * Only here so the screen knows whether losing notification access is worth mentioning. An
+     * archived habit's leftover reminder does not count — nothing was going to fire for it
+     * anyway, and warning about it would be warning about nothing.
+     */
+    val hasReminders: Boolean = false,
     val isLoading: Boolean = true,
 ) {
     public val doneCount: Int get() = items.count { it.isDone }

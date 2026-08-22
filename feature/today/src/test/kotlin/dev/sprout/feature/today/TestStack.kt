@@ -65,6 +65,8 @@ internal class TestStack {
         )
     }
 
+    fun archive(habitId: String) = runBlocking { habits.archive(habitId) }
+
     /** Marks the habit done on each of the given offsets back from today. */
     fun logDaysAgo(habitId: String, vararg daysAgo: Int) = runBlocking {
         daysAgo.forEach {

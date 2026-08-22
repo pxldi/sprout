@@ -209,6 +209,43 @@ class TodayViewModelTest {
             assertFalse(state.nothingScheduled)
         }
     }
+
+    /**
+     * Whether it is worth telling the user that notifications are off.
+     *
+     * Only the presence of a reminder makes that worth saying. Someone who never asked to be
+     * reminded is not missing anything, and a warning about a feature they declined is noise.
+     */
+    @Test
+    fun `a habit with no reminder is not something to warn about`() = runTest {
+        stack.addHabit(name = "Run")
+
+        viewModel().uiState.test {
+            assertFalse(awaitLoaded().hasReminders)
+        }
+    }
+
+    @Test
+    fun `a live habit with a reminder is`() = runTest {
+        val habit = stack.addHabit(name = "Run")
+        stack.addReminder(habit.id, LocalTime.of(7, 0))
+
+        viewModel().uiState.test {
+            assertTrue(awaitLoaded().hasReminders)
+        }
+    }
+
+    @Test
+    fun `an archived habit's leftover reminder is not`() = runTest {
+        // Nothing was going to fire for it, so warning about it would be warning about nothing.
+        val habit = stack.addHabit(name = "Run")
+        stack.addReminder(habit.id, LocalTime.of(7, 0))
+        stack.archive(habit.id)
+
+        viewModel().uiState.test {
+            assertFalse(awaitLoaded().hasReminders)
+        }
+    }
 }
 
 private suspend fun app.cash.turbine.TurbineTestContext<TodayUiState>.awaitLoaded(): TodayUiState {

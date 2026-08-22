@@ -99,3 +99,39 @@ public fun ExactAlarmNotice(
         }
     }
 }
+
+/**
+ * Says that reminders the user has already set are not arriving.
+ *
+ * Separate from [NotificationAccessNotice] because the situations are not the same. That one
+ * interrupts someone in the act of setting a reminder and can reasonably ask; this one reports a
+ * state they have been living in, possibly for weeks, on a screen they opened for another reason.
+ * So it never offers the dialog — see [ReminderPermissions.openNotificationSettings].
+ *
+ * Shown whenever the two settings disagree with each other: a reminder that is switched on and
+ * notifications that are switched off. The other way out is to turn the reminder off, which will
+ * be possible once habits can be edited.
+ */
+@Composable
+public fun RemindersSilencedBanner(onOpenSettings: () -> Unit, modifier: Modifier = Modifier) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+            contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+        ),
+    ) {
+        Column(
+            modifier = Modifier.padding(start = 16.dp, top = 12.dp, end = 8.dp, bottom = 4.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(
+                text = stringResource(R.string.perm_reminders_silenced),
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            TextButton(onClick = onOpenSettings) {
+                Text(stringResource(R.string.perm_open_settings))
+            }
+        }
+    }
+}

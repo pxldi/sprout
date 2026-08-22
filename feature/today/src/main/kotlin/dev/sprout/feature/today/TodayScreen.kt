@@ -50,7 +50,11 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
 import dev.sprout.core.scoring.plantStage
+import dev.sprout.core.ui.NotificationAccess
 import dev.sprout.core.ui.R
+import dev.sprout.core.ui.ReminderPermissions
+import dev.sprout.core.ui.RemindersSilencedBanner
+import dev.sprout.core.ui.rememberReminderPermissions
 import dev.sprout.core.ui.StrengthRing
 import kotlin.math.roundToInt
 
@@ -80,6 +84,7 @@ public fun TodayScreen(
     state: TodayUiState,
     actions: TodayActions,
     modifier: Modifier = Modifier,
+    permissions: ReminderPermissions = rememberReminderPermissions(),
 ) {
     var sheetFor by remember { mutableStateOf<TodayItem?>(null) }
 
@@ -98,20 +103,30 @@ public fun TodayScreen(
             }
         },
     ) { inner ->
-        if (state.isFirstRun) {
-            FirstRunToday(onAddHabit = actions.onAddHabit, modifier = Modifier.padding(inner))
-        } else if (state.nothingScheduled) {
-            NothingDueToday(Modifier.padding(inner))
-        } else {
-            LazyColumn(modifier = Modifier.padding(inner).fillMaxSize()) {
-                items(state.items, key = { it.habit.id }) { item ->
-                    SwipeableHabitRow(
-                        item = item,
-                        onToggle = { actions.onToggle(item.habit.id) },
-                        onSkip = { actions.onSkip(item.habit.id) },
-                        onMore = { sheetFor = item },
-                    )
-                    HorizontalDivider()
+        Column(modifier = Modifier.padding(inner).fillMaxSize()) {
+            // Above the list rather than in it: a reminder that is not arriving is true all day,
+            // and a warning that scrolls away is a warning the user will not see again.
+            if (state.hasReminders && permissions.notifications != NotificationAccess.GRANTED) {
+                RemindersSilencedBanner(
+                    onOpenSettings = permissions::openNotificationSettings,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                )
+            }
+            if (state.isFirstRun) {
+                FirstRunToday(onAddHabit = actions.onAddHabit)
+            } else if (state.nothingScheduled) {
+                NothingDueToday()
+            } else {
+                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                    items(state.items, key = { it.habit.id }) { item ->
+                        SwipeableHabitRow(
+                            item = item,
+                            onToggle = { actions.onToggle(item.habit.id) },
+                            onSkip = { actions.onSkip(item.habit.id) },
+                            onMore = { sheetFor = item },
+                        )
+                        HorizontalDivider()
+                    }
                 }
             }
         }

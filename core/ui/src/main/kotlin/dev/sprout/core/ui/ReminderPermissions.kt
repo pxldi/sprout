@@ -101,6 +101,17 @@ public class ReminderPermissions internal constructor(
 
     /** Opens the special-access screen. Only meaningful while [exactAlarms] is DENIED. */
     public fun resolveExactAlarms(): Unit = onRequestExactAlarms()
+
+    /**
+     * Goes straight to Settings, skipping the dialog even when one would be shown.
+     *
+     * For callers that outlive the ask. [notifications] cannot tell a fresh process that has
+     * never asked from one whose user refused for good — [ASKABLE][NotificationAccess.ASKABLE]
+     * is the safe default on a cold start, and it is wrong for anyone already blocked. Settings
+     * is the one route that works from every state, so a screen that is merely reporting the
+     * problem rather than asking about it should send people there and not gamble.
+     */
+    public fun openNotificationSettings(): Unit = onOpenNotificationSettings()
 }
 
 /**

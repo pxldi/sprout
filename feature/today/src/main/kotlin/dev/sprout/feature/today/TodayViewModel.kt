@@ -50,6 +50,9 @@ public class TodayViewModel @Inject constructor(
         TodayUiState(
             date = date,
             hasAnyHabits = activeHabits.isNotEmpty(),
+            hasReminders = enabledReminders.any { reminder ->
+                activeHabits.any { it.id == reminder.habitId }
+            },
             items = activeHabits
                 .filter { it.isScheduledOn(date) }
                 .map { habit ->

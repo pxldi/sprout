@@ -129,4 +129,6 @@
     <!-- No minute count: the window is Android's to choose, and quoting one would be a promise. -->
     <string name="perm_exact_body">Android may deliver this a few minutes late to save battery.</string>
     <string name="perm_exact_action">Allow exact timing</string>
+    <!-- On Today, where the reminder was set some time ago and has been quietly failing since. -->
+    <string name="perm_reminders_silenced">Your reminders aren\'t arriving — notifications are turned off for Sprout.</string>
 </resources>
