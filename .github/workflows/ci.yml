@@ -3,7 +3,11 @@ name: CI
 on:
   push:
     branches: [main]
+    paths-ignore: ['**.md', 'docs/**', 'fastlane/**']
   pull_request:
+    paths-ignore: ['**.md', 'docs/**', 'fastlane/**']
+  schedule:
+    - cron: '0 4 * * 1'   # Monday, for the reproducibility check only
   workflow_dispatch:
 
 concurrency:
@@ -12,6 +16,7 @@ concurrency:
 
 jobs:
   build:
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -42,6 +47,14 @@ jobs:
   reproducible:
     # Builds twice and diffs, so R8/AGP updates that break reproducibility are caught
     # before F-Droid catches them. See docs/03-roadmap.md, Risks.
+    #
+    # Two clean R8 release builds are the most expensive thing in this file, and the thing
+    # it guards against (a toolchain update) does not change between two commits on the same
+    # day. So: tags, the weekly cron, and on demand — not every push.
+    if: >-
+      github.event_name == 'schedule' ||
+      github.event_name == 'workflow_dispatch' ||
+      startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
