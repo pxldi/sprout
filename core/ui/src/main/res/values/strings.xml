@@ -39,6 +39,64 @@
     <string name="status_skipped">Skipped today</string>
     <string name="action_close">Close</string>
 
+    <!--
+      Habit creation. One question per screen: the cue and the coping plan are the intervention,
+      and on a single scrolling form they are the two fields everybody skips.
+    -->
+    <string name="create_title">New habit</string>
+    <string name="create_step">Step %1$d of %2$d</string>
+    <string name="create_back">Back</string>
+    <string name="create_next">Next</string>
+    <string name="create_save">Create habit</string>
+    <string name="create_optional">Optional — you can add this later.</string>
+
+    <string name="create_what_title">What are you building?</string>
+    <string name="create_name_label">Habit</string>
+    <string name="create_name_hint">Morning run</string>
+    <string name="create_type_do">Do it</string>
+    <string name="create_type_count">Count it</string>
+    <string name="create_type_avoid">Avoid it</string>
+    <string name="create_unit_label">Unit</string>
+    <string name="create_unit_hint">pages</string>
+    <string name="create_target_label">Daily target</string>
+    <string name="create_identity_label">I\'m someone who…</string>
+    <string name="create_identity_hint">runs in the morning</string>
+    <string name="create_identity_help">How strongly people tie a habit to who they are predicts whether they keep it.</string>
+
+    <string name="create_smallest_title">What\'s the smallest version that still counts?</string>
+    <string name="create_smallest_body">This is what you do on the worst day, instead of nothing. Make it almost too small to fail.</string>
+    <string name="create_smallest_label">Smallest version</string>
+    <string name="create_smallest_hint">Put my running shoes on</string>
+
+    <string name="create_cue_title">When and where?</string>
+    <string name="create_cue_body">Deciding this in advance is the most reliable single thing in the research. Finish the sentence.</string>
+    <string name="create_cue_prefix">If</string>
+    <string name="create_cue_hint">it\'s 7am and I\'ve had my coffee</string>
+    <string name="create_cue_then">…then I\'ll %1$s.</string>
+
+    <string name="create_coping_title">And when it goes wrong?</string>
+    <string name="create_coping_body">Everyone misses. Deciding the fallback now is what keeps a missed morning from becoming a missed week.</string>
+    <string name="create_coping_prefix">If I miss it, then</string>
+    <string name="create_coping_hint">I\'ll do it right after dinner</string>
+
+    <string name="create_schedule_title">How often?</string>
+    <string name="create_schedule_daily">Every day</string>
+    <string name="create_schedule_days">Certain days</string>
+    <string name="create_schedule_weekly">A few times a week</string>
+    <string name="create_schedule_interval">Every few days</string>
+    <string name="create_schedule_days_empty">Pick at least one day.</string>
+    <string name="create_schedule_times">%1$d times a week</string>
+    <string name="create_schedule_times_help">Scored by the week, so one bad Tuesday can still be a good week.</string>
+    <string name="create_schedule_every">Every %1$d days</string>
+
+    <string name="create_reminder_title">Want a nudge?</string>
+    <string name="create_reminder_body">You can change or remove it any time.</string>
+    <string name="create_reminder_switch">Remind me</string>
+    <string name="create_reminder_change">Change time</string>
+    <string name="create_reminder_dialog_title">Remind me at</string>
+    <string name="create_reminder_confirm">Set</string>
+    <string name="create_reminder_cancel">Cancel</string>
+
     <string name="stage_seed">Seed</string>
     <string name="stage_sprout">Sprout</string>
     <string name="stage_sapling">Sapling</string>

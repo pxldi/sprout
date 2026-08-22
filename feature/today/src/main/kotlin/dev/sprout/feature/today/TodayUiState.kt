@@ -56,3 +56,17 @@ public data class TodayUiState(
     public val doneCount: Int get() = items.count { it.isDone }
     public val isEmpty: Boolean get() = !isLoading && items.isEmpty()
 }
+
+/**
+ * Everything Today can do, in one place.
+ *
+ * These five travel together through every layer of the screen, and passing them individually
+ * made the signatures grow a parameter each time the screen learned a new trick.
+ */
+public data class TodayActions(
+    val onAddHabit: () -> Unit = {},
+    val onToggle: (String) -> Unit = {},
+    val onSkip: (String) -> Unit = {},
+    val onMinimum: (String) -> Unit = {},
+    val onClear: (String) -> Unit = {},
+)

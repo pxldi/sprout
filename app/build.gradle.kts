@@ -71,6 +71,7 @@ dependencies {
     implementation(project(":core:datastore"))
     implementation(project(":core:ui"))
     implementation(project(":feature:today"))
+    implementation(project(":feature:habit"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)

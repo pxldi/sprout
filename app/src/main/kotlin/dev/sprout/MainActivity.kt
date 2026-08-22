@@ -10,7 +10,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import dagger.hilt.android.AndroidEntryPoint
 import dev.sprout.core.ui.SproutTheme
-import dev.sprout.feature.today.TodayRoute
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -19,7 +18,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             SproutTheme {
-                TodayRoute()
+                SproutNavHost()
             }
         }
     }

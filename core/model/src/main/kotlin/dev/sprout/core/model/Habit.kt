@@ -28,10 +28,15 @@ public data class Habit(
     /** The smallest version that still counts. "Put the shoes on." */
     val minimumVersion: String? = null,
 
-    /** "If it's 7 am and I've brushed my teeth, then ..." */
+    /**
+     * The *if* half of an implementation intention: "it's 7 am and I've brushed my teeth".
+     *
+     * Only the situation is stored. The then-half is the habit itself, and the sentence around
+     * it ("If …, then I'll …") is UI copy, so it stays translatable and survives a rename.
+     */
     val cue: String? = null,
 
-    /** "If I miss the morning, then after dinner." */
+    /** The fallback, stored the same way: "I'll do it after dinner" for "If I miss it, then …". */
     val copingPlan: String? = null,
 
     /** Habit this one is stacked onto, if any. */
