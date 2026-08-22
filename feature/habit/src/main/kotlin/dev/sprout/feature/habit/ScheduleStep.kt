@@ -51,7 +51,8 @@ internal fun ScheduleStep(draft: HabitDraft, onEdit: Edit) {
                     modifier = Modifier.padding(start = 12.dp),
                 )
             }
-            if (draft.scheduleKind == kind) {
+            // "Every day" needs nothing further; emitting the block anyway left a gap.
+            if (draft.scheduleKind == kind && kind != ScheduleKind.DAILY) {
                 ScheduleDetail(kind = kind, draft = draft, onEdit = onEdit)
             }
         }

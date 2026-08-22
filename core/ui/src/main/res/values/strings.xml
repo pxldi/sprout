@@ -16,6 +16,10 @@
     <string name="today_empty_body">You already showed up by being here. Add the first habit when you\'re ready.</string>
     <string name="today_add_habit">Add a habit</string>
 
+    <!-- Habits exist, none due today. Says plainly that this is the plan, not a lapse. -->
+    <string name="today_nothing_title">Nothing due today</string>
+    <string name="today_nothing_body">That\'s the schedule you chose, not a day you missed.</string>
+
     <!-- The three things Today may say about a miss. There is no fourth. -->
     <string name="note_missed_yesterday">Missed yesterday. One miss changes almost nothing — today does.</string>
     <string name="note_repairable">Your run is paused. Doing this today picks it back up.</string>
@@ -72,7 +76,8 @@
     <string name="create_cue_body">Deciding this in advance is the most reliable single thing in the research. Finish the sentence.</string>
     <string name="create_cue_prefix">If</string>
     <string name="create_cue_hint">it\'s 7am and I\'ve had my coffee</string>
-    <string name="create_cue_then">…then I\'ll %1$s.</string>
+    <!-- Habit names are noun phrases ("Morning run"), so the sentence cannot say "I'll <name>". -->
+    <string name="create_cue_then">…then: %1$s.</string>
 
     <string name="create_coping_title">And when it goes wrong?</string>
     <string name="create_coping_body">Everyone misses. Deciding the fallback now is what keeps a missed morning from becoming a missed week.</string>

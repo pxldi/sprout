@@ -5,6 +5,7 @@
 package dev.sprout.feature.habit
 
 import dev.sprout.core.model.HabitType
+import dev.sprout.core.model.Reminder
 import dev.sprout.core.model.ScheduleRule
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -74,6 +75,17 @@ public data class HabitDraft(
         ScheduleKind.SPECIFIC_DAYS -> ScheduleRule.SpecificDays(specificDays)
         ScheduleKind.TIMES_PER_WEEK -> ScheduleRule.TimesPerWeek(timesPerWeek)
         ScheduleKind.EVERY_N_DAYS -> ScheduleRule.EveryNDays(everyNDays, anchor)
+    }
+
+    /**
+     * Which days the reminder may fire on.
+     *
+     * Tied to the schedule rather than defaulting to every day: a Mon/Wed/Fri habit whose
+     * reminder went off on Tuesday would be nagging about something that is not due.
+     */
+    public fun reminderDaysMask(): Int = when (scheduleKind) {
+        ScheduleKind.SPECIFIC_DAYS -> Reminder.maskOf(specificDays)
+        else -> Reminder.ALL_DAYS
     }
 
     /**

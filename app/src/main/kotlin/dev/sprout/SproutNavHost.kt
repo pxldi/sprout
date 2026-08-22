@@ -22,9 +22,14 @@ internal fun SproutNavHost() {
             TodayRoute(onAddHabit = { navController.navigate(CREATE_HABIT_ROUTE) })
         }
         composable(CREATE_HABIT_ROUTE) {
-            // popBackStack, not navigate: finishing the flow returns to the Today already on the
-            // stack, so its state — and its scroll position — survive.
-            CreateHabitRoute(onFinished = { navController.popBackStack() })
+            // Popping *this* destination by name, rather than bare popBackStack(), which pops
+            // whatever happens to be on top. onFinished can fire more than once — a system back
+            // racing the exit transition, or a save landing as the user backs out — and a second
+            // bare pop would take Today with it and leave the NavHost with an empty stack, which
+            // renders as a blank white screen. Named and inclusive, a repeat call is a no-op.
+            CreateHabitRoute(
+                onFinished = { navController.popBackStack(CREATE_HABIT_ROUTE, inclusive = true) },
+            )
         }
     }
 }

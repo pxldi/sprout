@@ -87,8 +87,8 @@ public fun TodayScreen(
         modifier = modifier.fillMaxSize(),
         topBar = { TodayTopBar(state) },
         floatingActionButton = {
-            // Hidden on the empty state, which has its own, more explanatory button.
-            if (!state.isEmpty) {
+            // Hidden on first run, which has its own, more explanatory button.
+            if (!state.isFirstRun) {
                 FloatingActionButton(onClick = actions.onAddHabit) {
                     Icon(
                         imageVector = Icons.Default.Add,
@@ -98,8 +98,10 @@ public fun TodayScreen(
             }
         },
     ) { inner ->
-        if (state.isEmpty) {
-            EmptyToday(onAddHabit = actions.onAddHabit, modifier = Modifier.padding(inner))
+        if (state.isFirstRun) {
+            FirstRunToday(onAddHabit = actions.onAddHabit, modifier = Modifier.padding(inner))
+        } else if (state.nothingScheduled) {
+            NothingDueToday(Modifier.padding(inner))
         } else {
             LazyColumn(modifier = Modifier.padding(inner).fillMaxSize()) {
                 items(state.items, key = { it.habit.id }) { item ->
@@ -318,21 +320,6 @@ private fun HabitOptions(
                 modifier = Modifier.toggleable(value = false, onValueChange = { onClear() }),
                 headlineContent = { Text(stringResource(R.string.action_clear)) },
             )
-        }
-    }
-}
-
-@Composable
-private fun EmptyToday(onAddHabit: () -> Unit, modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier.fillMaxSize().padding(32.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Text(stringResource(R.string.today_empty_title), style = MaterialTheme.typography.headlineSmall)
-        Text(stringResource(R.string.today_empty_body), style = MaterialTheme.typography.bodyMedium)
-        Button(onClick = onAddHabit, modifier = Modifier.padding(top = 8.dp)) {
-            Text(stringResource(R.string.today_add_habit))
         }
     }
 }

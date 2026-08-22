@@ -5,10 +5,13 @@
 package dev.sprout.feature.habit
 
 import dev.sprout.core.model.HabitType
+import dev.sprout.core.model.Reminder
 import dev.sprout.core.model.ScheduleRule
 import org.junit.Test
 import java.time.DayOfWeek
+import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalTime
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -20,6 +23,14 @@ import kotlin.test.assertTrue
  * docs/02-app-design.md, "the plan is the product". If these tests ever get relaxed, that is a
  * product decision, not a cleanup.
  */
+private fun reminderWith(mask: Int) = Reminder(
+    habitId = "habit",
+    time = LocalTime.NOON,
+    daysMask = mask,
+    createdAt = Instant.EPOCH,
+    updatedAt = Instant.EPOCH,
+)
+
 class HabitDraftTest {
 
     private val anchor = LocalDate.of(2026, 1, 5)
@@ -87,5 +98,19 @@ class HabitDraftTest {
             base.copy(scheduleKind = ScheduleKind.EVERY_N_DAYS, everyNDays = 3)
                 .scheduleRule(anchor),
         )
+    }
+
+    @Test
+    fun `a reminder is confined to the days the habit is actually scheduled`() {
+        val everyDay = HabitDraft(name = "Meditate")
+        assertEquals(Reminder.ALL_DAYS, everyDay.reminderDaysMask())
+
+        val mwf = everyDay.copy(
+            scheduleKind = ScheduleKind.SPECIFIC_DAYS,
+            specificDays = setOf(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY, DayOfWeek.FRIDAY),
+        )
+        val reminder = reminderWith(mwf.reminderDaysMask())
+        assertTrue(reminder.firesOn(DayOfWeek.MONDAY))
+        assertFalse(reminder.firesOn(DayOfWeek.TUESDAY))
     }
 }

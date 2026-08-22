@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -45,8 +46,9 @@ public fun CreateHabitRoute(
 
     // Leave once the habit is actually stored, not when the button is tapped. Navigating on the
     // tap would show Today without the new habit on it, for as long as the write takes.
-    LaunchedEffect(state.savedHabitId) {
-        if (state.savedHabitId != null) onFinished()
+    val savedId = state.savedHabitId
+    LaunchedEffect(savedId) {
+        if (savedId != null) onFinished()
     }
 
     CreateHabitScreen(
@@ -73,7 +75,9 @@ public fun CreateHabitScreen(
     BackHandler(onBack = onBack)
 
     Scaffold(
-        modifier = modifier.fillMaxSize(),
+        // Every step but one has a text field, and without this the keyboard covers the very
+        // button the step is asking the user to press.
+        modifier = modifier.fillMaxSize().imePadding(),
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.create_title)) },

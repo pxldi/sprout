@@ -102,6 +102,7 @@ public class HabitCreationViewModel @Inject constructor(
                     Reminder(
                         habitId = saved.id,
                         time = draft.reminderTime,
+                        daysMask = draft.reminderDaysMask(),
                         createdAt = now,
                         updatedAt = now,
                     ),

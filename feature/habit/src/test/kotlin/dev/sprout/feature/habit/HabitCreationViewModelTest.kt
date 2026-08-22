@@ -9,6 +9,7 @@ import dev.sprout.core.database.inMemoryRepositories
 import dev.sprout.core.model.HabitType
 import dev.sprout.core.model.ScheduleRule
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -34,6 +35,7 @@ private val TODAY: LocalDate = LocalDate.of(2026, 1, 5)
 private val NOW: Instant = TODAY.atTime(9, 0).toInstant(ZoneOffset.UTC)
 
 /** A real database behind the view model. The write is the thing worth testing. */
+@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 class HabitCreationViewModelTest {
 

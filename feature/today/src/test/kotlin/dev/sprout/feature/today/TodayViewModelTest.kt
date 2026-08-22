@@ -9,6 +9,7 @@ import dev.sprout.core.model.EntryStatus
 import dev.sprout.core.model.HabitType
 import dev.sprout.core.model.ScheduleRule
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -21,9 +22,11 @@ import org.robolectric.RobolectricTestRunner
 import java.time.DayOfWeek
 import java.time.LocalTime
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 class TodayViewModelTest {
 
@@ -44,8 +47,7 @@ class TodayViewModelTest {
     @Test
     fun `an account with no habits reports empty rather than loading forever`() = runTest {
         viewModel().uiState.test {
-            val state = awaitItem().takeIf { !it.isLoading } ?: awaitItem()
-            assertTrue(state.isEmpty)
+            assertTrue(awaitLoaded().isFirstRun)
         }
     }
 
@@ -182,6 +184,29 @@ class TodayViewModelTest {
         stack.addHabit(name = "Alcohol-free day", type = HabitType.AVOID)
         viewModel().uiState.test {
             assertEquals(1, awaitLoaded().items.size)
+        }
+    }
+
+    @Test
+    fun `a habit that exists but is not due today is not a first run`() = runTest {
+        // TEST_TODAY is a Monday; this habit only falls on Tuesdays.
+        stack.addHabit(schedule = ScheduleRule.SpecificDays(setOf(DayOfWeek.TUESDAY)))
+        viewModel().uiState.test {
+            val state = awaitLoaded()
+            assertTrue(state.items.isEmpty())
+            // The distinction that matters: creating a Mon/Wed/Fri habit on a Saturday must not
+            // send the user back to "add the first habit", which reads as a failed save.
+            assertFalse(state.isFirstRun)
+            assertTrue(state.nothingScheduled)
+        }
+    }
+
+    @Test
+    fun `no habits at all is a first run`() = runTest {
+        viewModel().uiState.test {
+            val state = awaitLoaded()
+            assertTrue(state.isFirstRun)
+            assertFalse(state.nothingScheduled)
         }
     }
 }

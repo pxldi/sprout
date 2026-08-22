@@ -51,10 +51,23 @@ public enum class GentleNote {
 public data class TodayUiState(
     val date: LocalDate,
     val items: List<TodayItem> = emptyList(),
+    /** Whether *any* habit exists, scheduled today or not. */
+    val hasAnyHabits: Boolean = false,
     val isLoading: Boolean = true,
 ) {
     public val doneCount: Int get() = items.count { it.isDone }
-    public val isEmpty: Boolean get() = !isLoading && items.isEmpty()
+
+    /** Nothing exists yet. The only state that gets the "Day 1 of 66" welcome. */
+    public val isFirstRun: Boolean get() = !isLoading && !hasAnyHabits
+
+    /**
+     * Habits exist; none of them fall on today.
+     *
+     * Kept strictly apart from [isFirstRun]. Creating a Mon/Wed/Fri habit on a Saturday used to
+     * land the user back on "add the first habit", which reads as though the habit they just
+     * made had failed to save.
+     */
+    public val nothingScheduled: Boolean get() = !isLoading && hasAnyHabits && items.isEmpty()
 }
 
 /**

@@ -60,6 +60,7 @@ public class TodayViewModel @Inject constructor(
         val date = today
         TodayUiState(
             date = date,
+            hasAnyHabits = activeHabits.isNotEmpty(),
             items = activeHabits
                 .filter { it.isScheduledOn(date) }
                 .map { habit ->
