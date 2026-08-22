@@ -108,4 +108,13 @@
     <string name="stage_tree">Tree</string>
     <string name="stage_ingrained">Ingrained</string>
 
+
+    <!-- Reminders. Neutral by design: a notification that implies you have failed is the one
+         people turn off, and a reminder the user has silenced cannot help them at all. -->
+    <string name="notify_channel_reminders">Habit reminders</string>
+    <string name="notify_channel_reminders_desc">A nudge at the time you chose, on the days the habit is scheduled.</string>
+    <string name="notify_prompt">Time for this one.</string>
+    <string name="notify_done">Done</string>
+    <string name="notify_skip">Skip</string>
+    <string name="notify_snooze">Later</string>
 </resources>
