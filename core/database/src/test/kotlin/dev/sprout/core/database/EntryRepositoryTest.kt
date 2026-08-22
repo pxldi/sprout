@@ -87,4 +87,32 @@ class EntryRepositoryTest {
         assertEquals(2.5, stored?.value)
         assertEquals("two and a half litres", stored?.note)
     }
+
+    @Test
+    fun `toggling marks the day done, and toggling again un-marks it`() = runTest {
+        val h = habits.save(habit())
+
+        entries.toggle(h.id, TEST_START)
+        assertEquals(EntryStatus.DONE, entries.find(h.id, TEST_START)?.status)
+
+        entries.toggle(h.id, TEST_START)
+        assertNull(entries.find(h.id, TEST_START))
+    }
+
+    @Test
+    fun `toggling a skipped day completes it rather than clearing it`() = runTest {
+        val h = habits.save(habit())
+        entries.log(h.id, TEST_START, EntryStatus.SKIP)
+
+        // A skip is not a completion, so there is nothing to undo — the tap means "actually, I did it".
+        entries.toggle(h.id, TEST_START)
+        assertEquals(EntryStatus.DONE, entries.find(h.id, TEST_START)?.status)
+    }
+
+    @Test
+    fun `toggling records where the tap came from`() = runTest {
+        val h = habits.save(habit())
+        entries.toggle(h.id, TEST_START, EntrySource.NOTIFICATION)
+        assertEquals(EntrySource.NOTIFICATION, entries.find(h.id, TEST_START)?.source)
+    }
 }

@@ -26,8 +26,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import java.time.Clock
 import java.time.LocalDate
 import java.time.LocalTime
@@ -42,15 +40,6 @@ public class TodayViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val today: LocalDate get() = LocalDate.now(clock)
-
-    /**
-     * Serialises writes.
-     *
-     * [toggle] reads the current entry and then writes based on it. Two taps in quick succession
-     * — a double tap, or a widget and the app at once — would otherwise both read "not logged"
-     * and both write DONE, so the second tap would silently fail to undo the first.
-     */
-    private val writes = Mutex()
 
     public val uiState: StateFlow<TodayUiState> = combine(
         habits.observeActive(),
@@ -94,26 +83,15 @@ public class TodayViewModel @Inject constructor(
 
     /** Un-logs today. Reversing a mistaken tap must be as easy as making it. */
     public fun clear(habitId: String) {
-        viewModelScope.launch { writes.withLock { entries.clear(habitId, today) } }
+        viewModelScope.launch { entries.clear(habitId, today) }
     }
 
     public fun toggle(habitId: String) {
-        viewModelScope.launch {
-            writes.withLock {
-                val existing = entries.find(habitId, today)
-                if (existing?.status?.isCompletion == true) {
-                    entries.clear(habitId, today)
-                } else {
-                    entries.log(habitId, today, EntryStatus.DONE)
-                }
-            }
-        }
+        viewModelScope.launch { entries.toggle(habitId, today) }
     }
 
     private fun log(habitId: String, status: EntryStatus, source: EntrySource) {
-        viewModelScope.launch {
-            writes.withLock { entries.log(habitId, today, status, source = source) }
-        }
+        viewModelScope.launch { entries.log(habitId, today, status, source = source) }
     }
 
     private companion object {
