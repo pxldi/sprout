@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Runtime-requested when the first reminder is saved, not at launch. -->
+    <!-- Requested the moment the user switches a reminder on, not at launch. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- Alarms do not survive a reboot; without this, reminders stop and never say why. -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />

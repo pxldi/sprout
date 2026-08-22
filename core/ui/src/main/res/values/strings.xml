@@ -117,4 +117,16 @@
     <string name="notify_done">Done</string>
     <string name="notify_skip">Skip</string>
     <string name="notify_snooze">Later</string>
+
+    <!--
+      Permission prompts. Written to say what the user loses, not what the app wants: "Sprout
+      needs permission" is about the app, "reminders won't appear" is about them.
+    -->
+    <string name="perm_notify_needed">Reminders need permission to appear.</string>
+    <string name="perm_notify_blocked">Notifications are turned off for Sprout, so reminders won\'t appear.</string>
+    <string name="perm_allow">Allow</string>
+    <string name="perm_open_settings">Open settings</string>
+    <!-- No minute count: the window is Android's to choose, and quoting one would be a promise. -->
+    <string name="perm_exact_body">Android may deliver this a few minutes late to save battery.</string>
+    <string name="perm_exact_action">Allow exact timing</string>
 </resources>

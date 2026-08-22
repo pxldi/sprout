@@ -20,5 +20,11 @@ dependencies {
     api(libs.compose.ui.tooling.preview)
     debugImplementation(libs.compose.ui.tooling)
 
+    // Reminder permissions: the result launcher, LocalActivity, and the ON_RESUME recheck.
+    api(libs.androidx.activity.compose)
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.lifecycle.runtime.compose)
+
     testImplementation(libs.junit)
+    testImplementation(libs.kotlin.test)
 }

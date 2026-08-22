@@ -35,6 +35,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.sprout.core.ui.R
+import dev.sprout.core.ui.ReminderPermissions
+import dev.sprout.core.ui.rememberReminderPermissions
 
 @Composable
 public fun CreateHabitRoute(
@@ -70,6 +72,9 @@ public fun CreateHabitScreen(
     onBack: () -> Unit,
     onSave: () -> Unit,
     modifier: Modifier = Modifier,
+    // Held by the screen rather than by the reminder step, so that walking back through the
+    // questions does not forget that the user was already asked once.
+    permissions: ReminderPermissions = rememberReminderPermissions(),
 ) {
     // The system back gesture walks back through the questions before it leaves the flow.
     BackHandler(onBack = onBack)
@@ -104,7 +109,12 @@ public fun CreateHabitScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             StepHeader(state.step)
-            CreationStepContent(step = state.step, draft = state.draft, onEdit = onEdit)
+            CreationStepContent(
+                step = state.step,
+                draft = state.draft,
+                permissions = permissions,
+                onEdit = onEdit,
+            )
         }
     }
 }
@@ -132,6 +142,7 @@ private fun StepHeader(step: CreationStep) {
 private fun CreationStepContent(
     step: CreationStep,
     draft: HabitDraft,
+    permissions: ReminderPermissions,
     onEdit: ((HabitDraft) -> HabitDraft) -> Unit,
 ) {
     when (step) {
@@ -140,7 +151,7 @@ private fun CreationStepContent(
         CreationStep.CUE -> CueStep(draft, onEdit)
         CreationStep.COPING -> CopingStep(draft, onEdit)
         CreationStep.SCHEDULE -> ScheduleStep(draft, onEdit)
-        CreationStep.REMINDER -> ReminderStep(draft, onEdit)
+        CreationStep.REMINDER -> ReminderStep(draft, permissions, onEdit)
     }
 }
 

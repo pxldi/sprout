@@ -4,17 +4,13 @@
  */
 package dev.sprout.reminder
 
-import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
-import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import androidx.core.content.ContextCompat
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dev.sprout.MainActivity
 import dev.sprout.core.database.repository.EntryRepository
@@ -99,10 +95,14 @@ public class ReminderNotifier @Inject constructor(
      * reminder is saved — so the app can be running with reminders configured and the permission
      * refused, and posting then would throw.
      */
+    /**
+     * Not a permission check. `POST_NOTIFICATIONS` only exists from API 33, so checking it alone
+     * would say yes on older versions to a user who had switched the app off in Settings, and
+     * yes on newer ones is not quite the whole story either. This is the question that actually
+     * matters, and it has the same answer on every version.
+     */
     private fun canPost(): Boolean =
-        Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
-            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) ==
-            PackageManager.PERMISSION_GRANTED
+        NotificationManagerCompat.from(context).areNotificationsEnabled()
 
     private fun ensureChannel() {
         val channel = NotificationChannel(
