@@ -41,8 +41,9 @@ internal fun NoteDialog(
     onSave: (String) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    // Seeded from the stored note, so editing starts from what is there rather than from blank —
-    // and survives a rotation with whatever has been typed since.
+    // Seeded from the stored note, so editing starts from what is there rather than from blank.
+    // Saveable, but a rotation still closes the dialog: what holds it open is plain `remember`
+    // state on the screen, the same as the overflow sheet above it.
     var text by rememberSaveable(item.habit.id) { mutableStateOf(item.todayNote.orEmpty()) }
     val focus = remember { FocusRequester() }
 
