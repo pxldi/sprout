@@ -10,6 +10,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.sprout.core.database.repository.HabitRepository
 import dev.sprout.core.database.repository.ReminderRepository
+import dev.sprout.core.datastore.ShineHistory
 import dev.sprout.core.model.Habit
 import dev.sprout.core.model.Reminder
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -66,6 +67,7 @@ public data class HabitEditActions(
 public class HabitEditViewModel @Inject constructor(
     private val habits: HabitRepository,
     private val reminders: ReminderRepository,
+    private val shine: ShineHistory,
     private val clock: Clock,
     savedState: SavedStateHandle,
 ) : ViewModel() {
@@ -118,7 +120,12 @@ public class HabitEditViewModel @Inject constructor(
      * Kept behind a confirmation because it is the only action here the user cannot walk back:
      * archiving hides a habit, this ends it, along with every day they ever logged against it.
      */
-    public fun delete(): Unit = once { habits.delete(habitId) }
+    public fun delete(): Unit = once {
+        habits.delete(habitId)
+        // The only moment a habit is really gone. Archiving must not do this: an unarchived
+        // habit that is congratulated all over again for its first completion has not earned it.
+        shine.forget(habitId)
+    }
 
     private suspend fun load() {
         val loaded = habits.find(habitId)

@@ -20,6 +20,7 @@ dependencies {
     implementation(project(":core:scoring"))
     implementation(project(":core:scheduling"))
     implementation(project(":core:database"))
+    implementation(project(":core:datastore"))
     implementation(project(":core:ui"))
 
     implementation(platform(libs.compose.bom))

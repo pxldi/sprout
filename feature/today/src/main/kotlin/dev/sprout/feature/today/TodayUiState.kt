@@ -26,6 +26,14 @@ public data class TodayItem(
     val todayNote: String?,
     val reminderAt: LocalTime?,
     val gentleNote: GentleNote?,
+    /**
+     * The one specific true thing to say about today's completion, if there is one.
+     *
+     * Null far more often than not: null when the day is not completed, null when [gentleNote]
+     * has something to say instead, and null when everything true has already been said this
+     * fortnight. Silence is the correct output — see [ShineLine].
+     */
+    val shine: ShineLine? = null,
 ) {
     public val isDone: Boolean get() = todayStatus?.isCompletion == true
     public val isSkipped: Boolean get() = todayStatus == EntryStatus.SKIP

@@ -20,6 +20,7 @@ dependencies {
     implementation(project(":core:scoring"))
     implementation(project(":core:scheduling"))
     implementation(project(":core:database"))
+    implementation(project(":core:datastore"))
     implementation(project(":core:ui"))
 
     implementation(platform(libs.compose.bom))
@@ -39,6 +40,7 @@ dependencies {
     testImplementation(libs.turbine)
     testImplementation(libs.androidx.test.core)
     testImplementation(project(":core:database"))
+    testImplementation(project(":core:datastore"))
     testImplementation(libs.androidx.room.runtime)
     testImplementation(libs.androidx.room.testing)
 }

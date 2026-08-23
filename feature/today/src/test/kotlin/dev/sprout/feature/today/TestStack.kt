@@ -6,12 +6,15 @@ package dev.sprout.feature.today
 
 import androidx.test.core.app.ApplicationProvider
 import dev.sprout.core.database.inMemoryRepositories
+import dev.sprout.core.datastore.ShineHistory
+import dev.sprout.core.datastore.temporaryShineHistory
 import dev.sprout.core.model.EntryStatus
 import dev.sprout.core.model.Habit
 import dev.sprout.core.model.HabitType
 import dev.sprout.core.model.Reminder
 import dev.sprout.core.model.ScheduleRule
 import kotlinx.coroutines.runBlocking
+import java.io.File
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
@@ -32,6 +35,11 @@ internal class TestStack {
     val habits = repositories.habits
     val entries = repositories.entries
     val reminders = repositories.reminders
+
+    /** A fresh file per stack, so one test's praise is not remembered in the next one. */
+    val shine: ShineHistory = temporaryShineHistory(
+        File.createTempFile("shine", ".preferences_pb").also { it.delete() },
+    )
 
     fun close() = repositories.close()
 

@@ -5,10 +5,12 @@
 package dev.sprout.feature.today
 
 import app.cash.turbine.test
+import dev.sprout.core.datastore.ShineHistory
 import dev.sprout.core.model.EntryStatus
 import dev.sprout.core.model.HabitType
 import dev.sprout.core.model.ScheduleRule
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -42,7 +44,8 @@ class TodayViewModelTest {
         stack.close()
     }
 
-    private fun viewModel() = TodayViewModel(stack.habits, stack.entries, stack.reminders, stack.clock)
+    private fun viewModel() =
+        TodayViewModel(stack.habits, stack.entries, stack.reminders, stack.shine, stack.clock)
 
     @Test
     fun `an account with no habits reports empty rather than loading forever`() = runTest {
@@ -279,6 +282,65 @@ class TodayViewModelTest {
             // And so the one line Today is allowed to say about a miss still gets to say it.
             assertFalse(item.isDone)
         }
+    }
+
+    @Test
+    fun `ticking a habit off says one specific true thing about it`() = runTest {
+        val habit = stack.addHabit(name = "Run")
+        val model = viewModel()
+
+        model.complete(habit.id)
+
+        model.uiState.test {
+            val item = awaitUntilItem { it.items.single().shine != null }
+            assertEquals(ShineLine.FirstEver, item.shine)
+        }
+    }
+
+    @Test
+    fun `coming back after a miss outranks any praise for the streak`() = runTest {
+        // The most rewarded state in the app. Two celebratory lines under one row would be two
+        // things said where the rule is one, and this is the one that must survive.
+        val habit = stack.addHabit(name = "Run")
+        stack.logDaysAgo(habit.id, 4, 3, 2)
+        val model = viewModel()
+
+        model.complete(habit.id)
+
+        model.uiState.test {
+            val item = awaitUntilItem { it.items.single().gentleNote != null }
+            assertEquals(GentleNote.BOUNCED_BACK, item.gentleNote)
+            assertNull(item.shine, "nothing else gets to speak over coming back")
+        }
+    }
+
+    @Test
+    fun `a day that was not completed gets no praise`() = runTest {
+        val habit = stack.addHabit(name = "Run")
+        val model = viewModel()
+
+        model.skip(habit.id)
+
+        model.uiState.test {
+            val item = awaitUntilItem { it.items.single().isSkipped }
+            assertNull(item.shine, "a skip is a decision, not an achievement")
+        }
+    }
+
+    @Test
+    fun `what was said is written down, so it is not said again tomorrow`() = runTest {
+        val habit = stack.addHabit(name = "Run")
+        val model = viewModel()
+
+        model.complete(habit.id)
+
+        model.uiState.test {
+            awaitUntilItem { it.items.single().shine != null }
+        }
+        assertEquals(
+            TEST_TODAY,
+            stack.shine.shown.first()[ShineHistory.keyOf(habit.id, ShineLine.FirstEver.kind)],
+        )
     }
 
     @Test

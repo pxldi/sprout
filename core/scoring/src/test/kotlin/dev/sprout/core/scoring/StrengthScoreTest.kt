@@ -132,4 +132,31 @@ class PlantStageTest {
         )
         assertTrue(afterMiss.plantStage() >= PlantStage.SAPLING)
     }
+
+    @Test
+    fun `before the first occasion there is no plant`() {
+        val firstDay = HabitScorer.evaluate(ScheduleRule.Daily, completions(0, 1), today = day(0))
+        assertEquals(PlantStage.SEED, firstDay.stageBefore(day(0)))
+    }
+
+    @Test
+    fun `the stage before a day is the one the day before it produced`() {
+        // The whole point of `stageBefore`: read as of yesterday it must agree with what
+        // yesterday's own evaluation said, or a screen announces growth that never happened.
+        (2..70).forEach { days ->
+            assertEquals(
+                stageAfter(perfectDays = days - 1),
+                HabitScorer.evaluate(ScheduleRule.Daily, completions(0, days), today = day(days - 1))
+                    .stageBefore(day(days - 1)),
+                "day $days disagrees with day ${days - 1}",
+            )
+        }
+    }
+
+    @Test
+    fun `a perfect run passes every stage exactly once and never goes backwards`() {
+        val stages = (1..80).map { stageAfter(perfectDays = it) }
+        assertEquals(stages.sorted(), stages, "a stage was lost on a day nothing went wrong")
+        assertEquals(PlantStage.INGRAINED, stages.last())
+    }
 }

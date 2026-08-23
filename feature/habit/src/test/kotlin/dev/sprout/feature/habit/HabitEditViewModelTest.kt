@@ -7,6 +7,8 @@ package dev.sprout.feature.habit
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.core.app.ApplicationProvider
 import dev.sprout.core.database.inMemoryRepositories
+import dev.sprout.core.datastore.ShineHistory
+import dev.sprout.core.datastore.temporaryShineHistory
 import dev.sprout.core.model.Habit
 import dev.sprout.core.model.HabitType
 import dev.sprout.core.model.Reminder
@@ -24,6 +26,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import java.io.File
 import java.time.Clock
 import java.time.DayOfWeek
 import java.time.Instant
@@ -47,6 +50,11 @@ class HabitEditViewModelTest {
     private val clock = Clock.fixed(NOW, ZoneOffset.UTC)
     private val repositories =
         inMemoryRepositories(ApplicationProvider.getApplicationContext(), clock)
+
+    /** A fresh file per test, so one test's remembered praise is not the next one's. */
+    private val shine = temporaryShineHistory(
+        File.createTempFile("shine", ".preferences_pb").also { it.delete() },
+    )
 
     @Before
     fun setUp() {
@@ -238,8 +246,28 @@ class HabitEditViewModelTest {
 
         viewModel.delete()
 
-        assertTrue(viewModel.uiState.value.finished)
+        // Deleting now also clears the app's memory of what it said about this habit, and that
+        // write lands on DataStore's own dispatcher — so wait for the screen to say it is done
+        // rather than for the tap to return.
+        viewModel.uiState.first { it.finished }
         assertNull(repositories.habits.find(stored.id))
+    }
+
+    @Test
+    fun `deleting forgets what the app said about it, but archiving does not`() = runTest {
+        val stored = save(habit())
+        val key = ShineHistory.keyOf(stored.id, "first")
+        shine.record(stored.id, "first", TODAY)
+
+        editing(stored.id).archive()
+        assertEquals(
+            TODAY,
+            shine.shown.first()[key],
+            "an unarchived habit congratulated again on its first completion has not earned it",
+        )
+
+        editing(stored.id).delete()
+        assertNull(shine.shown.first { it[key] == null }[key])
     }
 
     @Test
@@ -253,6 +281,7 @@ class HabitEditViewModelTest {
     private fun editing(habitId: String) = HabitEditViewModel(
         habits = repositories.habits,
         reminders = repositories.reminders,
+        shine = shine,
         clock = clock,
         savedState = SavedStateHandle(mapOf(HABIT_ID_ARG to habitId)),
     )

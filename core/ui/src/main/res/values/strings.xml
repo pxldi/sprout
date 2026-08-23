@@ -43,6 +43,37 @@
     <string name="action_close">Close</string>
 
     <!--
+      Shine: the one line the app says when a habit is ticked off.
+
+      Every line here is generated from numbers the user produced, and each has a test asserting
+      the claim is arithmetically true. There is deliberately no generic fallback: when nothing
+      true is left to say, the app says nothing, because "Nice job!" is exactly the filler this
+      file exists to keep out. At most one line ever appears, and coming back after a miss always
+      wins over all of these.
+    -->
+    <string name="shine_first">That\'s the first one. Every run this habit ever has starts here.</string>
+
+    <!-- The plant moved on a stage. Once each, and the app\'s signature moment. -->
+    <string name="shine_stage_sprout">That one turned the seed into a sprout.</string>
+    <string name="shine_stage_sapling">That one grew it into a sapling.</string>
+    <string name="shine_stage_tree">That one made it a tree.</string>
+    <!-- No number quoted: the threshold is the scorer\'s to hold, not this sentence\'s to promise. -->
+    <string name="shine_stage_ingrained">Strong, and for long enough now to count as ingrained.</string>
+
+    <plurals name="shine_run">
+        <item quantity="one">%1$d in a row, and no run of yours has been longer.</item>
+        <item quantity="other">%1$d in a row, and no run of yours has been longer.</item>
+    </plurals>
+    <plurals name="shine_week_best">
+        <item quantity="one">%1$d time this week. No week of yours has been better.</item>
+        <item quantity="other">%1$d times this week. No week of yours has been better.</item>
+    </plurals>
+    <plurals name="shine_week_count">
+        <item quantity="one">That\'s %1$d time this week.</item>
+        <item quantity="other">That\'s %1$d times this week.</item>
+    </plurals>
+
+    <!--
       Notes. The user's own words about a day, kept as they typed them and never interpreted.
       Nothing here asks why, and nothing calls a note an excuse or a reason: "Ran the short loop
       instead" is a fact about a Tuesday, and the app has no opinion about it.

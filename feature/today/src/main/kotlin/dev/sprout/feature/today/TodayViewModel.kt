@@ -10,6 +10,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.sprout.core.database.repository.EntryRepository
 import dev.sprout.core.database.repository.HabitRepository
 import dev.sprout.core.database.repository.ReminderRepository
+import dev.sprout.core.datastore.ShineHistory
 import dev.sprout.core.model.Entry
 import dev.sprout.core.model.EntrySource
 import dev.sprout.core.model.EntryStatus
@@ -36,16 +37,29 @@ public class TodayViewModel @Inject constructor(
     private val habits: HabitRepository,
     private val entries: EntryRepository,
     reminders: ReminderRepository,
+    private val shine: ShineHistory,
     private val clock: Clock,
 ) : ViewModel() {
 
     private val today: LocalDate get() = LocalDate.now(clock)
 
+    /**
+     * Lines already written down this process, as `habitId|kind|date`.
+     *
+     * The praise is derived state, recomputed from the log on every emission, but remembering it
+     * is a write — and that write feeds the very flow the line is derived from. Without this the
+     * two would chase each other: record, re-emit, record again. One write per habit per kind per
+     * day is all that is wanted, and the stored value is the same on a second run anyway, so a
+     * process that restarts and writes once more costs nothing.
+     */
+    private val recorded = mutableSetOf<String>()
+
     public val uiState: StateFlow<TodayUiState> = combine(
         habits.observeActive(),
         entries.observeAllByHabit(),
         reminders.observeEnabled(),
-    ) { activeHabits, entriesByHabit, enabledReminders ->
+        shine.shown,
+    ) { activeHabits, entriesByHabit, enabledReminders, shownLines ->
         val date = today
         TodayUiState(
             date = date,
@@ -60,7 +74,8 @@ public class TodayViewModel @Inject constructor(
                         entries = entriesByHabit[habit.id].orEmpty(),
                         reminder = enabledReminders.earliestFor(habit.id, date),
                         date = date,
-                    )
+                        shown = shownLines,
+                    ).also { remember(it, date) }
                 }
                 .sortedWith(compareBy({ it.reminderAt ?: LocalTime.MAX }, { it.habit.position })),
             isLoading = false,
@@ -93,6 +108,13 @@ public class TodayViewModel @Inject constructor(
         viewModelScope.launch { entries.toggle(habitId, today) }
     }
 
+    /** Writes down that a line was said, once, so it is not said again for a fortnight. */
+    private fun remember(item: TodayItem, date: LocalDate) {
+        val line = item.shine ?: return
+        if (!recorded.add("${ShineHistory.keyOf(item.habit.id, line.kind)}|$date")) return
+        viewModelScope.launch { shine.record(item.habit.id, line.kind, date) }
+    }
+
     /**
      * Saves the user's own words about today, or clears them when the text is blank.
      *
@@ -115,20 +137,34 @@ public class TodayViewModel @Inject constructor(
 private fun Habit.isScheduledOn(date: LocalDate): Boolean =
     OccasionCalendar.occasionOn(schedule, date) != null
 
-private fun Habit.toItem(entries: List<Entry>, reminder: LocalTime?, date: LocalDate): TodayItem {
+private fun Habit.toItem(
+    entries: List<Entry>,
+    reminder: LocalTime?,
+    date: LocalDate,
+    shown: Map<String, LocalDate>,
+): TodayItem {
     val progress = HabitScorer.evaluate(
         rule = schedule,
         entries = entries.map { DayLog(it.date, it.status) },
         today = date,
     )
     val todayEntry = entries.firstOrNull { it.date == date }
+    val note = progress.gentleNote(date, todayEntry?.status)
     return TodayItem(
         habit = this,
         progress = progress,
         todayStatus = todayEntry?.status,
         todayNote = todayEntry?.note,
         reminderAt = reminder,
-        gentleNote = progress.gentleNote(date, todayEntry?.status),
+        gentleNote = note,
+        // At most one thing is ever said under a row, and coming back after a miss outranks
+        // everything — it is the state the research says to reward, and praise for a third
+        // Tuesday must not be what crowds it out.
+        shine = if (note == null && todayEntry?.status?.isCompletion == true) {
+            shineFor(id, progress, entries, date, shown)
+        } else {
+            null
+        },
     )
 }
 

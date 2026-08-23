@@ -60,6 +60,7 @@ import dev.sprout.core.ui.ReminderPermissions
 import dev.sprout.core.ui.RemindersSilencedBanner
 import dev.sprout.core.ui.rememberReminderPermissions
 import dev.sprout.core.ui.StrengthRing
+import dev.sprout.core.ui.rememberCompletionHaptic
 import kotlin.math.roundToInt
 
 @Composable
@@ -308,6 +309,13 @@ private fun SwipeBackground(direction: SwipeToDismissBoxValue, hasNote: Boolean)
 @Composable
 private fun HabitRow(item: TodayItem, onToggle: () -> Unit, onMore: () -> Unit) {
     val context = LocalContext.current
+    val haptic = rememberCompletionHaptic()
+    // Ticking only. The state read here is the one before the tap, so this is "it is about to
+    // become done" — un-ticking gets nothing, which is what keeps the buzz meaning something.
+    val toggle = {
+        if (!item.isDone) haptic()
+        onToggle()
+    }
     val ringLabel = context.getString(
         R.string.habit_strength_description,
         item.habit.name,
@@ -318,7 +326,7 @@ private fun HabitRow(item: TodayItem, onToggle: () -> Unit, onMore: () -> Unit) 
         modifier = Modifier.toggleable(
             value = item.isDone,
             role = Role.Checkbox,
-            onValueChange = { onToggle() },
+            onValueChange = { toggle() },
         ),
         leadingContent = {
             StrengthRing(strength = item.progress.strength, label = ringLabel)
@@ -333,7 +341,7 @@ private fun HabitRow(item: TodayItem, onToggle: () -> Unit, onMore: () -> Unit) 
         supportingContent = { RowSupport(item) },
         trailingContent = {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Checkbox(checked = item.isDone, onCheckedChange = { onToggle() })
+                Checkbox(checked = item.isDone, onCheckedChange = { toggle() })
                 IconButton(onClick = onMore) {
                     Icon(
                         imageVector = Icons.Default.MoreVert,
@@ -390,13 +398,16 @@ private fun RowSupport(item: TodayItem) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
+        // The one good thing to say, when there is one. Never alongside a gentle note: the
+        // ViewModel has already decided only one of them exists.
+        item.shine?.let { line ->
+            Text(
+                text = line.text(),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.primary,
+            )
+        }
     }
-}
-
-private fun GentleNote.stringRes(): Int = when (this) {
-    GentleNote.MISSED_YESTERDAY -> R.string.note_missed_yesterday
-    GentleNote.REPAIRABLE -> R.string.note_repairable
-    GentleNote.BOUNCED_BACK -> R.string.note_bounced_back
 }
 
 /**
