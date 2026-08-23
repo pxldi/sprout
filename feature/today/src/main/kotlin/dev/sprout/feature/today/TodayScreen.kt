@@ -63,7 +63,7 @@ import kotlin.math.roundToInt
 @Composable
 public fun TodayRoute(
     onAddHabit: () -> Unit,
-    onEditHabit: (String) -> Unit,
+    onOpenHabit: (String) -> Unit,
     onManageHabits: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: TodayViewModel = hiltViewModel(),
@@ -78,7 +78,7 @@ public fun TodayRoute(
             onSkip = viewModel::skip,
             onMinimum = viewModel::completeMinimum,
             onClear = viewModel::clear,
-            onEdit = onEditHabit,
+            onOpen = onOpenHabit,
         ),
         modifier = modifier,
     )
@@ -145,7 +145,7 @@ public fun TodayScreen(
                 onSkip = { actions.onSkip(item.habit.id); sheetFor = null },
                 onMinimum = { actions.onMinimum(item.habit.id); sheetFor = null },
                 onClear = { actions.onClear(item.habit.id); sheetFor = null },
-                onEdit = { actions.onEdit(item.habit.id); sheetFor = null },
+                onOpen = { actions.onOpen(item.habit.id); sheetFor = null },
             )
         }
     }
@@ -329,7 +329,7 @@ private fun HabitOptions(
     onSkip: () -> Unit,
     onMinimum: () -> Unit,
     onClear: () -> Unit,
-    onEdit: () -> Unit,
+    onOpen: () -> Unit,
 ) {
     Column(Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
         Text(
@@ -354,11 +354,11 @@ private fun HabitOptions(
                 headlineContent = { Text(stringResource(R.string.action_clear)) },
             )
         }
-        // Last, and separated: everything above logs today, this one changes the habit itself.
+        // Last, and separated: everything above logs today, this one leaves Today entirely.
         HorizontalDivider(Modifier.padding(vertical = 8.dp))
         ListItem(
-            modifier = Modifier.clickable(onClick = onEdit),
-            headlineContent = { Text(stringResource(R.string.action_edit)) },
+            modifier = Modifier.clickable(onClick = onOpen),
+            headlineContent = { Text(stringResource(R.string.action_open)) },
         )
     }
 }

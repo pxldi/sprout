@@ -30,7 +30,6 @@
     <string name="habit_best_run">best %1$d</string>
     <!-- A fraction, not a percentage: the denominator is the chances that really existed. -->
     <string name="habit_recent">done %1$d of %2$d</string>
-    <string name="habit_rest_days">%1$d rest days banked</string>
 
     <string name="action_complete">Mark done</string>
     <string name="action_undo">Undo</string>
@@ -167,4 +166,63 @@
     <string name="habits_archived">Archived</string>
     <string name="habits_empty">Nothing here yet. Habits you add will be listed here, archived ones included.</string>
     <string name="action_edit">Edit habit</string>
+
+    <!--
+      Habit detail: the habit's own history. Every number here is one the user produced, and the
+      denominators are real — "done 18 of 22" counts the chances that existed, never a flat 30.
+      Nothing on this screen is drawn in the error colour: a missed day is grey.
+    -->
+    <string name="detail_identity">I\'m someone who %1$s</string>
+    <plurals name="detail_window">
+        <item quantity="one">Last week</item>
+        <item quantity="other">Last %1$d weeks</item>
+    </plurals>
+    <string name="detail_empty">Nothing logged yet. The first day you tick it off, this fills in.</string>
+    <!-- Days one to six. States what is coming, and does not imply the habit is behind. -->
+    <string name="detail_early">Off to a start. The curve and calendar fill in over the first week.</string>
+
+    <string name="detail_runs_current">In a row now</string>
+    <string name="detail_runs_best">Best run</string>
+    <string name="detail_runs_recent">Last 30 days</string>
+    <!-- A fraction, so the denominator can say how many chances there actually were. -->
+    <string name="detail_runs_fraction">%1$d / %2$d</string>
+    <plurals name="detail_rest_days">
+        <item quantity="one">%1$d rest day banked</item>
+        <item quantity="other">%1$d rest days banked</item>
+    </plurals>
+
+    <string name="detail_curve_title">Strength</string>
+    <plurals name="detail_curve_description">
+        <item quantity="one">Strength over the last week, ending at %2$d out of 100.</item>
+        <item quantity="other">Strength over the last %1$d weeks, ending at %2$d out of 100.</item>
+    </plurals>
+
+    <string name="detail_calendar_title">Calendar</string>
+    <plurals name="detail_calendar_description">
+        <item quantity="one">Last week: %2$d done, %3$d missed, %4$d skipped.</item>
+        <item quantity="other">Last %1$d weeks: %2$d done, %3$d missed, %4$d skipped.</item>
+    </plurals>
+    <string name="detail_legend_done">Done</string>
+    <string name="detail_legend_missed">Missed</string>
+    <string name="detail_legend_skipped">Skipped</string>
+
+    <string name="detail_plan_title">The plan</string>
+    <!-- The stored halves are situations; the "if… then" sentence around them is copy, so it
+         stays translatable and survives a rename of the habit. -->
+    <string name="detail_plan_cue">If %1$s, then %2$s.</string>
+    <string name="detail_plan_coping">If I miss it, then %1$s.</string>
+    <string name="detail_plan_smallest">On a bad day: %1$s</string>
+    <string name="detail_plan_empty">No cue or fallback yet. They\'re the part of a habit the research is most sure about — Edit adds them.</string>
+
+    <string name="detail_weekdays_title">Which days</string>
+    <!-- A count of days done, never a percentage: the denominator differs per schedule. -->
+    <plurals name="detail_weekdays_description">
+        <item quantity="one">%1$s: %2$d done in the last week.</item>
+        <item quantity="other">%1$s: %2$d done in the last %3$d weeks.</item>
+    </plurals>
+
+    <string name="detail_notes_title">Notes</string>
+
+    <!-- Opens the habit's own screen. Editing lives one tap further in, on that screen. -->
+    <string name="action_open">Open habit</string>
 </resources>

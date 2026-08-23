@@ -91,5 +91,6 @@ public data class TodayActions(
     val onSkip: (String) -> Unit = {},
     val onMinimum: (String) -> Unit = {},
     val onClear: (String) -> Unit = {},
-    val onEdit: (String) -> Unit = {},
+    /** Opens the habit's own screen. Editing lives one tap further in, on that screen. */
+    val onOpen: (String) -> Unit = {},
 )

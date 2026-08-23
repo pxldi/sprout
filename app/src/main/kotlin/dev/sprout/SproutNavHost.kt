@@ -13,6 +13,7 @@ import androidx.navigation.navArgument
 import dev.sprout.feature.habit.CreateHabitRoute
 import dev.sprout.feature.habit.EditHabitRoute
 import dev.sprout.feature.habit.HABIT_ID_ARG
+import dev.sprout.feature.habit.HabitDetailRoute
 import dev.sprout.feature.habit.HabitListRoute
 import dev.sprout.feature.today.TodayRoute
 
@@ -21,7 +22,19 @@ private const val CREATE_HABIT_ROUTE = "habit/new"
 private const val HABIT_LIST_ROUTE = "habits"
 private const val EDIT_HABIT_ROUTE = "habit/{$HABIT_ID_ARG}/edit"
 
+/**
+ * Deliberately three segments, matching the edit route rather than the shorter `habit/{id}`.
+ *
+ * A two-segment pattern would sit alongside the literal `habit/new`, and which of the two wins a
+ * navigation to "habit/new" is Navigation's deep-link scoring, not something this file states.
+ * Keeping the verb on the end means the create wizard cannot be shadowed by a habit whose id
+ * happens to be the word "new".
+ */
+private const val HABIT_DETAIL_ROUTE = "habit/{$HABIT_ID_ARG}/detail"
+
 private fun editHabitRoute(habitId: String) = "habit/$habitId/edit"
+
+private fun habitDetailRoute(habitId: String) = "habit/$habitId/detail"
 
 @Composable
 internal fun SproutNavHost() {
@@ -30,7 +43,7 @@ internal fun SproutNavHost() {
         composable(TODAY_ROUTE) {
             TodayRoute(
                 onAddHabit = { navController.navigate(CREATE_HABIT_ROUTE) },
-                onEditHabit = { id -> navController.navigate(editHabitRoute(id)) },
+                onOpenHabit = { id -> navController.navigate(habitDetailRoute(id)) },
                 onManageHabits = { navController.navigate(HABIT_LIST_ROUTE) },
             )
         }
@@ -46,8 +59,20 @@ internal fun SproutNavHost() {
         }
         composable(HABIT_LIST_ROUTE) {
             HabitListRoute(
-                onOpenHabit = { id -> navController.navigate(editHabitRoute(id)) },
+                onOpenHabit = { id -> navController.navigate(habitDetailRoute(id)) },
                 onBack = { navController.popBackStack(HABIT_LIST_ROUTE, inclusive = true) },
+            )
+        }
+        composable(
+            route = HABIT_DETAIL_ROUTE,
+            arguments = listOf(navArgument(HABIT_ID_ARG) { type = NavType.StringType }),
+        ) {
+            // The hub for one habit: everything about it is read here, and Edit is the one way
+            // out that changes anything. Popping by name for the same reason as the others —
+            // onBack also fires when the habit is deleted out from under the screen.
+            HabitDetailRoute(
+                onBack = { navController.popBackStack(HABIT_DETAIL_ROUTE, inclusive = true) },
+                onEdit = { id -> navController.navigate(editHabitRoute(id)) },
             )
         }
         composable(

@@ -115,7 +115,8 @@ private class Walk(
         // on the very day it happened.
         val met = done >= occasion.requiredCompletions
         if (!met && !occasion.isClosedOn(today)) {
-            resolved += ResolvedOccasion(occasion, OccasionOutcome.OPEN, done, credit, firstCompletion)
+            // `strength` unchanged: nothing has been judged, so the curve runs flat here.
+            resolved += ResolvedOccasion(occasion, OccasionOutcome.OPEN, done, credit, firstCompletion, strength)
             return
         }
 
@@ -124,7 +125,8 @@ private class Walk(
         applyRun(occasion, outcome, firstCompletion)
 
         runWasAlive = outcome == OccasionOutcome.COMPLETED || outcome.isNeutral
-        resolved += ResolvedOccasion(occasion, outcome, done, credit, firstCompletion)
+        // Snapshot after the strength has moved, which is what makes the curve a record.
+        resolved += ResolvedOccasion(occasion, outcome, done, credit, firstCompletion, strength)
     }
 
     private fun classify(occasion: Occasion, logged: List<DayLog>, done: Int): OccasionOutcome = when {

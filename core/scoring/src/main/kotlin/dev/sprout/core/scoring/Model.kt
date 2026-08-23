@@ -56,6 +56,16 @@ public data class ResolvedOccasion(
     /** Credit toward strength in `0.0..1.0`; partial for an unmet weekly target. */
     val credit: Double,
     val firstCompletionDate: LocalDate?,
+    /**
+     * Strength once this occasion had been accounted for, on the same 0..100 scale.
+     *
+     * Recorded during the one pass the scorer already makes, so a screen can draw the curve
+     * without asking for the score again at ninety different dates — which would be the same
+     * walk ninety times over, and would quietly disagree with the headline number the first
+     * time either calculation changed. An [OccasionOutcome.OPEN] occasion carries the strength
+     * it inherited: nothing has been judged yet, so nothing has moved.
+     */
+    val strength: Double,
 )
 
 /**
