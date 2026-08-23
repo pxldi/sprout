@@ -2,17 +2,27 @@
 <!--
   The status-bar icon. Android throws away every colour here and keeps only the alpha channel,
   so this is a solid white silhouette on transparent — anything else renders as a grey blob.
+
+  The same paths as the launcher mark, in the same 108 coordinate space, scaled up by the group
+  to fill 22 of the 24dp the status bar allows. Redrawing them at 24 by hand would have produced
+  a second, slightly different sprout, and the two would have drifted the first time either was
+  touched.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp" android:height="24dp"
     android:viewportWidth="24" android:viewportHeight="24">
-    <path
-        android:fillColor="#FFFFFFFF"
-        android:pathData="M11,20 L11,10 C11,9.4 11.4,9 12,9 C12.6,9 13,9.4 13,10 L13,20 Z" />
-    <path
-        android:fillColor="#FFFFFFFF"
-        android:pathData="M11,14 C8.5,14 6.5,12 6,9 C9,8.6 11,10.5 11,13 Z" />
-    <path
-        android:fillColor="#FFFFFFFF"
-        android:pathData="M13,11 C13.4,8.2 15.6,6 18.5,6 C18.2,9.2 16,11.3 13,11.4 Z" />
+    <group
+        android:pivotX="51.5" android:pivotY="57.5"
+        android:scaleX="0.44" android:scaleY="0.44"
+        android:translateX="-39.5" android:translateY="-45.5">
+        <path
+            android:fillColor="#FFFFFFFF"
+            android:pathData="M53.5,55 C41,55 31.5,47 30.5,33.5 C42,32.5 52,42 53.5,55 Z" />
+        <path
+            android:fillColor="#FFFFFFFF"
+            android:pathData="M54.5,57 C63.5,56 71.5,49.5 72.5,38 C63,38 55.5,45.5 54.5,57 Z" />
+        <path
+            android:fillColor="#FFFFFFFF"
+            android:pathData="M50.6,79.5 C51.6,71 50.4,64 51.3,53.5 L56.3,54.5 C55.5,65 57,71.5 58.4,78.5 A3.95,3.95 0 0 1 50.6,79.5 Z" />
+    </group>
 </vector>

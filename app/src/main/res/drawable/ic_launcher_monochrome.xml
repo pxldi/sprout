@@ -1,19 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Two leaves and a stem, drawn as fills rather than strokes so the mark keeps its weight when a
-  launcher scales it down. It sits inside the central 66dp safe circle: everything outside that
-  is what the mask crops, and it differs by device.
+  The themed-icon layer. Android keeps only the alpha and tints the rest to whatever the user's
+  wallpaper decided, so the colour below is a placeholder that never reaches the screen — the
+  shape is the whole contribution. Same geometry as the foreground, which is the point: a themed
+  icon that is not recognisably the same mark is worse than none.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp" android:height="108dp"
     android:viewportWidth="108" android:viewportHeight="108">
     <path
-        android:fillColor="#4C6B45"
+        android:fillColor="#33402F"
         android:pathData="M53.5,55 C41,55 31.5,47 30.5,33.5 C42,32.5 52,42 53.5,55 Z" />
     <path
-        android:fillColor="#4C6B45"
+        android:fillColor="#33402F"
         android:pathData="M54.5,57 C63.5,56 71.5,49.5 72.5,38 C63,38 55.5,45.5 54.5,57 Z" />
     <path
-        android:fillColor="#4C6B45"
+        android:fillColor="#33402F"
         android:pathData="M50.6,79.5 C51.6,71 50.4,64 51.3,53.5 L56.3,54.5 C55.5,65 57,71.5 58.4,78.5 A3.95,3.95 0 0 1 50.6,79.5 Z" />
 </vector>
