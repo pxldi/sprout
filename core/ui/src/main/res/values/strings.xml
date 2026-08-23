@@ -276,4 +276,23 @@
 
     <!-- Opens the habit's own screen. Editing lives one tap further in, on that screen. -->
     <string name="action_open">Open habit</string>
+
+    <!--
+      The day-7 and day-66 cards. Counted in completions, so the wording never says "day 7" —
+      at its seventh completion a Mon/Wed/Fri habit is a fortnight old. The number itself comes
+      from the value, never from these strings.
+    -->
+    <plurals name="milestone_count">
+        <item quantity="one">%1$d time</item>
+        <item quantity="other">%1$d times</item>
+    </plurals>
+    <string name="milestone_seven_body">Seven separate decisions to show up. Repetition is the whole mechanism, and this is what it looks like from the inside.</string>
+    <!-- Lally et al. 2010: median 66 days to automaticity, with a very wide range. Stated as
+         what the study found, not as a promise about this habit. -->
+    <string name="milestone_sixty_six_body">Sixty-six is the median number of repetitions it took people in Lally\'s study before a behaviour started running itself. You\'ve done sixty-six.</string>
+    <string name="milestone_share">Share</string>
+    <string name="milestone_share_chooser">Share this</string>
+    <string name="milestone_share_failed">Couldn\'t make the image. The milestone still counts.</string>
+    <!-- The product name, on the share card. Not translated: it is the name of the thing. -->
+    <string name="app_wordmark" translatable="false">Sprout</string>
 </resources>

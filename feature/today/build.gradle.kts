@@ -23,6 +23,8 @@ dependencies {
     implementation(project(":core:datastore"))
     implementation(project(":core:ui"))
 
+    implementation(libs.androidx.core.ktx)
+
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.material.icons.extended)
 

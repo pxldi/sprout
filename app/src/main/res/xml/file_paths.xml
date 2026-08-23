@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The one directory this app ever hands out a uri for.
+
+  Scoped to `shared/` inside the cache rather than the whole cache: a provider pointed at
+  `cache-path path="."` would let anything holding a grant walk the DataStore and Room's
+  temporary files, and nothing in there is anyone else's business.
+-->
+<paths>
+    <cache-path name="shared" path="shared/" />
+</paths>

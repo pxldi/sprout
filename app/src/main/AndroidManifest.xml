@@ -32,6 +32,21 @@
             </intent-filter>
         </activity>
 
+        <!--
+          Serves the milestone share card, and nothing else. Not exported: the receiving app is
+          admitted by the per-uri grant the share intent carries, which lasts as long as that
+          app's task and covers only the file named in it.
+        -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
         <receiver
             android:name=".reminder.ReminderReceiver"
             android:exported="false" />

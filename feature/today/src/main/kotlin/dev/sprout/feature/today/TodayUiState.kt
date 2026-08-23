@@ -34,6 +34,12 @@ public data class TodayItem(
      * fortnight. Silence is the correct output — see [ShineLine].
      */
     val shine: ShineLine? = null,
+    /**
+     * The seventh or sixty-sixth completion, on the day it happens. Null on all the other days.
+     *
+     * Outranks [shine], which is a sentence about the same completion; see [Milestone].
+     */
+    val milestone: Milestone? = null,
 ) {
     public val isDone: Boolean get() = todayStatus?.isCompletion == true
     public val isSkipped: Boolean get() = todayStatus == EntryStatus.SKIP

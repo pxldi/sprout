@@ -328,6 +328,34 @@ class TodayViewModelTest {
     }
 
     @Test
+    fun `the seventh completion gets a card, and the card does the talking`() = runTest {
+        val habit = stack.addHabit(name = "Run")
+        stack.logDaysAgo(habit.id, 6, 5, 4, 3, 2, 1)
+        val model = viewModel()
+
+        model.complete(habit.id)
+
+        model.uiState.test {
+            val item = awaitUntilItem { it.items.single().milestone != null }
+            assertEquals(Milestone.SEVEN, item.milestone)
+            assertNull(item.shine, "the card is already the whole sentence and then some")
+        }
+    }
+
+    @Test
+    fun `an ordinary completion gets no card`() = runTest {
+        val habit = stack.addHabit(name = "Run")
+        val model = viewModel()
+
+        model.complete(habit.id)
+
+        model.uiState.test {
+            val item = awaitUntilItem { it.items.single().isDone }
+            assertNull(item.milestone, "the first one is not the seventh")
+        }
+    }
+
+    @Test
     fun `what was said is written down, so it is not said again tomorrow`() = runTest {
         val habit = stack.addHabit(name = "Run")
         val model = viewModel()

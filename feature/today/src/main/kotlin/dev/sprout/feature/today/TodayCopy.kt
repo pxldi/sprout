@@ -38,6 +38,17 @@ internal fun ShineLine.text(): String = when (this) {
     is ShineLine.TimesThisWeek -> pluralStringResource(R.plurals.shine_week_count, times, times)
 }
 
+/**
+ * The sentence on the milestone card.
+ *
+ * The count is not in here — it is rendered from [Milestone.completions] — so these two strings
+ * cannot drift from the number the card is actually claiming.
+ */
+internal fun Milestone.bodyRes(): Int = when (this) {
+    Milestone.SEVEN -> R.string.milestone_seven_body
+    Milestone.SIXTY_SIX -> R.string.milestone_sixty_six_body
+}
+
 internal fun GentleNote.stringRes(): Int = when (this) {
     GentleNote.MISSED_YESTERDAY -> R.string.note_missed_yesterday
     GentleNote.REPAIRABLE -> R.string.note_repairable

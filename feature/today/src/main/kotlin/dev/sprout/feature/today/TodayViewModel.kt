@@ -150,6 +150,7 @@ private fun Habit.toItem(
     )
     val todayEntry = entries.firstOrNull { it.date == date }
     val note = progress.gentleNote(date, todayEntry?.status)
+    val milestone = milestoneFor(entries, date)
     return TodayItem(
         habit = this,
         progress = progress,
@@ -157,10 +158,12 @@ private fun Habit.toItem(
         todayNote = todayEntry?.note,
         reminderAt = reminder,
         gentleNote = note,
+        milestone = milestone,
         // At most one thing is ever said under a row, and coming back after a miss outranks
         // everything — it is the state the research says to reward, and praise for a third
-        // Tuesday must not be what crowds it out.
-        shine = if (note == null && todayEntry?.status?.isCompletion == true) {
+        // Tuesday must not be what crowds it out. A milestone card is already the whole
+        // sentence and then some, so it silences the line rather than sitting above it.
+        shine = if (note == null && milestone == null && todayEntry?.status?.isCompletion == true) {
             shineFor(id, progress, entries, date, shown)
         } else {
             null

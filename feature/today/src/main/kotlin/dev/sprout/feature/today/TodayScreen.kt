@@ -189,6 +189,9 @@ private fun TodayContent(
                         onNote = { onNote(item) },
                         onMore = { onMore(item) },
                     )
+                    // Under its own habit rather than at the top of the screen: on a day two
+                    // habits both hit one, "sixty-six times" has to say which sixty-six.
+                    item.milestone?.let { MilestoneCard(habitName = item.habit.name, milestone = it) }
                     HorizontalDivider()
                 }
             }
