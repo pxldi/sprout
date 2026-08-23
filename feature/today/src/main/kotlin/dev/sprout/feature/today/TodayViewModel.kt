@@ -158,11 +158,15 @@ private fun Habit.toItem(
         todayNote = todayEntry?.note,
         reminderAt = reminder,
         gentleNote = note,
+        // The one thing here that does not take its turn. A comeback that is also the seventh
+        // completion gets the line *and* the card, because they are different registers and
+        // because a milestone is unrepeatable: a line held back today is true again next week,
+        // whereas by tomorrow the count is eight and this card is gone for good.
         milestone = milestone,
-        // At most one thing is ever said under a row, and coming back after a miss outranks
-        // everything — it is the state the research says to reward, and praise for a third
-        // Tuesday must not be what crowds it out. A milestone card is already the whole
-        // sentence and then some, so it silences the line rather than sitting above it.
+        // At most one *line* under a row, and coming back after a miss outranks everything —
+        // it is the state the research says to reward, and praise for a third Tuesday must not
+        // be what crowds it out. The card outranks the line for the same reason it does not
+        // wait its turn: it already says more, and it only ever gets today.
         shine = if (note == null && milestone == null && todayEntry?.status?.isCompletion == true) {
             shineFor(id, progress, entries, date, shown)
         } else {

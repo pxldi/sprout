@@ -343,6 +343,25 @@ class TodayViewModelTest {
     }
 
     @Test
+    fun `a comeback that is also the seventh completion gets both`() = runTest {
+        // The one place two things are said under one row. A miss inside the first week is the
+        // common case, not an edge one, and holding the card back would not postpone it — by
+        // tomorrow the count is eight and there is no seventh completion left to celebrate.
+        val habit = stack.addHabit(name = "Run")
+        stack.logDaysAgo(habit.id, 7, 6, 5, 4, 3, 2)
+        val model = viewModel()
+
+        model.complete(habit.id)
+
+        model.uiState.test {
+            val item = awaitUntilItem { it.items.single().milestone != null }
+            assertEquals(GentleNote.BOUNCED_BACK, item.gentleNote, "test premise: yesterday was missed")
+            assertEquals(Milestone.SEVEN, item.milestone)
+            assertNull(item.shine, "the line still waits its turn")
+        }
+    }
+
+    @Test
     fun `an ordinary completion gets no card`() = runTest {
         val habit = stack.addHabit(name = "Run")
         val model = viewModel()
