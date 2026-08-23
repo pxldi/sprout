@@ -29,9 +29,8 @@ import java.time.format.TextStyle
 import java.util.Locale
 
 @Composable
-internal fun ScheduleStep(draft: HabitDraft, onEdit: Edit) {
+internal fun SchedulePicker(draft: HabitDraft, onEdit: Edit) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        StepPrompt(stringResource(R.string.create_schedule_title))
         ScheduleKind.entries.forEach { kind ->
             Row(
                 modifier = Modifier

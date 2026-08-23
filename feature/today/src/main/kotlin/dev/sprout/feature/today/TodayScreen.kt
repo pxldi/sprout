@@ -5,6 +5,7 @@
 package dev.sprout.feature.today
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,6 +16,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ListAlt
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.EventBusy
@@ -61,6 +63,8 @@ import kotlin.math.roundToInt
 @Composable
 public fun TodayRoute(
     onAddHabit: () -> Unit,
+    onEditHabit: (String) -> Unit,
+    onManageHabits: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: TodayViewModel = hiltViewModel(),
 ) {
@@ -69,10 +73,12 @@ public fun TodayRoute(
         state = state,
         actions = TodayActions(
             onAddHabit = onAddHabit,
+            onManageHabits = onManageHabits,
             onToggle = viewModel::toggle,
             onSkip = viewModel::skip,
             onMinimum = viewModel::completeMinimum,
             onClear = viewModel::clear,
+            onEdit = onEditHabit,
         ),
         modifier = modifier,
     )
@@ -90,7 +96,7 @@ public fun TodayScreen(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        topBar = { TodayTopBar(state) },
+        topBar = { TodayTopBar(state, onManageHabits = actions.onManageHabits) },
         floatingActionButton = {
             // Hidden on first run, which has its own, more explanatory button.
             if (!state.isFirstRun) {
@@ -139,6 +145,7 @@ public fun TodayScreen(
                 onSkip = { actions.onSkip(item.habit.id); sheetFor = null },
                 onMinimum = { actions.onMinimum(item.habit.id); sheetFor = null },
                 onClear = { actions.onClear(item.habit.id); sheetFor = null },
+                onEdit = { actions.onEdit(item.habit.id); sheetFor = null },
             )
         }
     }
@@ -146,7 +153,7 @@ public fun TodayScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun TodayTopBar(state: TodayUiState) {
+private fun TodayTopBar(state: TodayUiState, onManageHabits: () -> Unit) {
     TopAppBar(
         title = { Text(stringResource(R.string.today_title)) },
         actions = {
@@ -158,8 +165,18 @@ private fun TodayTopBar(state: TodayUiState) {
                         state.items.size,
                     ),
                     style = MaterialTheme.typography.labelLarge,
-                    modifier = Modifier.padding(end = 16.dp),
+                    modifier = Modifier.padding(end = 8.dp),
                 )
+            }
+            // The only way to reach a habit that is not due today, and the only way to reach an
+            // archived one. Hidden on first run, where there is nothing to list.
+            if (!state.isFirstRun) {
+                IconButton(onClick = onManageHabits) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ListAlt,
+                        contentDescription = stringResource(R.string.habits_title),
+                    )
+                }
             }
         },
     )
@@ -312,6 +329,7 @@ private fun HabitOptions(
     onSkip: () -> Unit,
     onMinimum: () -> Unit,
     onClear: () -> Unit,
+    onEdit: () -> Unit,
 ) {
     Column(Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
         Text(
@@ -336,5 +354,11 @@ private fun HabitOptions(
                 headlineContent = { Text(stringResource(R.string.action_clear)) },
             )
         }
+        // Last, and separated: everything above logs today, this one changes the habit itself.
+        HorizontalDivider(Modifier.padding(vertical = 8.dp))
+        ListItem(
+            modifier = Modifier.clickable(onClick = onEdit),
+            headlineContent = { Text(stringResource(R.string.action_edit)) },
+        )
     }
 }

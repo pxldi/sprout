@@ -81,13 +81,15 @@ public data class TodayUiState(
 /**
  * Everything Today can do, in one place.
  *
- * These five travel together through every layer of the screen, and passing them individually
- * made the signatures grow a parameter each time the screen learned a new trick.
+ * These travel together through every layer of the screen, and passing them individually made the
+ * signatures grow a parameter each time the screen learned a new trick.
  */
 public data class TodayActions(
     val onAddHabit: () -> Unit = {},
+    val onManageHabits: () -> Unit = {},
     val onToggle: (String) -> Unit = {},
     val onSkip: (String) -> Unit = {},
     val onMinimum: (String) -> Unit = {},
     val onClear: (String) -> Unit = {},
+    val onEdit: (String) -> Unit = {},
 )

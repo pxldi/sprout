@@ -4,6 +4,7 @@
  */
 package dev.sprout.feature.habit
 
+import dev.sprout.core.model.Habit
 import dev.sprout.core.model.HabitType
 import dev.sprout.core.model.Reminder
 import dev.sprout.core.model.ScheduleRule
@@ -113,4 +114,81 @@ class HabitDraftTest {
         assertTrue(reminder.firesOn(DayOfWeek.MONDAY))
         assertFalse(reminder.firesOn(DayOfWeek.TUESDAY))
     }
+
+    @Test
+    fun `a stored habit reads back as the answers that made it`() {
+        val stored = Habit(
+            name = "Read",
+            type = HabitType.DO_NUMERIC,
+            schedule = ScheduleRule.SpecificDays(setOf(DayOfWeek.TUESDAY, DayOfWeek.THURSDAY)),
+            identityPhrase = "reads every evening",
+            minimumVersion = "one page",
+            cue = "I'm in bed",
+            copingPlan = "I'll read at lunch",
+            unit = "pages",
+            target = 20.0,
+            createdAt = Instant.EPOCH,
+            updatedAt = Instant.EPOCH,
+        )
+
+        val draft = HabitDraft.of(stored, reminder = null)
+
+        assertEquals("Read", draft.name)
+        assertEquals(HabitType.DO_NUMERIC, draft.type)
+        assertEquals(ScheduleKind.SPECIFIC_DAYS, draft.scheduleKind)
+        assertEquals(setOf(DayOfWeek.TUESDAY, DayOfWeek.THURSDAY), draft.specificDays)
+        assertEquals("reads every evening", draft.identityPhrase)
+        assertEquals("one page", draft.minimumVersion)
+        assertEquals("pages", draft.unit)
+        assertTrue(draft.isComplete)
+        assertFalse(draft.reminderEnabled)
+    }
+
+    @Test
+    fun `a target of twenty goes back in the box as twenty`() {
+        // Stored as a Double, but "20.0" is not what anybody typed, and it is what they would
+        // have to delete before typing 25.
+        val draft = HabitDraft.of(measurable(target = 20.0), reminder = null)
+        assertEquals("20", draft.target)
+
+        // A genuinely fractional target keeps its fraction.
+        assertEquals("2.5", HabitDraft.of(measurable(target = 2.5), reminder = null).target)
+    }
+
+    @Test
+    fun `a switched-off reminder still offers the time it was set to`() {
+        val stored = Habit(
+            name = "Read",
+            type = HabitType.DO_BOOL,
+            schedule = ScheduleRule.Daily,
+            cue = "I'm in bed",
+            copingPlan = "I'll read at lunch",
+            createdAt = Instant.EPOCH,
+            updatedAt = Instant.EPOCH,
+        )
+        val off = Reminder(
+            habitId = stored.id,
+            time = LocalTime.of(21, 30),
+            enabled = false,
+            createdAt = Instant.EPOCH,
+            updatedAt = Instant.EPOCH,
+        )
+
+        val draft = HabitDraft.of(stored, off)
+
+        assertFalse(draft.reminderEnabled)
+        assertEquals(LocalTime.of(21, 30), draft.reminderTime)
+    }
+
+    private fun measurable(target: Double) = Habit(
+        name = "Read",
+        type = HabitType.DO_NUMERIC,
+        schedule = ScheduleRule.Daily,
+        cue = "I'm in bed",
+        copingPlan = "I'll read at lunch",
+        unit = "pages",
+        target = target,
+        createdAt = Instant.EPOCH,
+        updatedAt = Instant.EPOCH,
+    )
 }

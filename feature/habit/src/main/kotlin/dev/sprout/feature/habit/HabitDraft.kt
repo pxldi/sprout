@@ -4,12 +4,14 @@
  */
 package dev.sprout.feature.habit
 
+import dev.sprout.core.model.Habit
 import dev.sprout.core.model.HabitType
 import dev.sprout.core.model.Reminder
 import dev.sprout.core.model.ScheduleRule
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
+import kotlin.math.truncate
 
 /**
  * The six questions asked when creating a habit, in order.
@@ -65,6 +67,18 @@ public data class HabitDraft(
     val everyNDays: Int = DEFAULT_EVERY_N,
     val reminderEnabled: Boolean = false,
     val reminderTime: LocalTime = DEFAULT_REMINDER_TIME,
+
+    /**
+     * The day an every-N-days schedule counts from.
+     *
+     * Carried so that editing a habit's *name* cannot silently move which days it falls on.
+     * Null while the habit is new, and null while some other kind is picked: switching **to**
+     * every-N-days is a fresh decision, and it starts from today.
+     */
+    val everyNAnchor: LocalDate? = null,
+
+    /** Which day an n-times-a-week week begins on. Never asked, only preserved. */
+    val weekStart: DayOfWeek = DayOfWeek.MONDAY,
 ) {
     /** True once [scheduleRule] can be built. [ScheduleRule.SpecificDays] rejects an empty set. */
     public val hasUsableSchedule: Boolean
@@ -73,8 +87,8 @@ public data class HabitDraft(
     public fun scheduleRule(anchor: LocalDate): ScheduleRule = when (scheduleKind) {
         ScheduleKind.DAILY -> ScheduleRule.Daily
         ScheduleKind.SPECIFIC_DAYS -> ScheduleRule.SpecificDays(specificDays)
-        ScheduleKind.TIMES_PER_WEEK -> ScheduleRule.TimesPerWeek(timesPerWeek)
-        ScheduleKind.EVERY_N_DAYS -> ScheduleRule.EveryNDays(everyNDays, anchor)
+        ScheduleKind.TIMES_PER_WEEK -> ScheduleRule.TimesPerWeek(timesPerWeek, weekStart)
+        ScheduleKind.EVERY_N_DAYS -> ScheduleRule.EveryNDays(everyNDays, everyNAnchor ?: anchor)
     }
 
     /**
@@ -108,9 +122,59 @@ public data class HabitDraft(
         CreationStep.REMINDER -> true
     }
 
+    /**
+     * Whether every question has an answer good enough to store.
+     *
+     * The wizard reaches this by walking the steps; the edit form has no steps to walk, so it
+     * asks outright. Both go through [canLeave], which keeps one definition of "answered".
+     */
+    public val isComplete: Boolean get() = CreationStep.entries.all { canLeave(it) }
+
     /** A measurable habit without a target has nothing to measure against. */
     private fun typeFieldsValid(): Boolean =
         type != HabitType.DO_NUMERIC || (target.toDoubleOrNull()?.let { it > 0 } == true)
 
     public val targetValue: Double? get() = target.toDoubleOrNull()
+
+    public companion object {
+        /**
+         * The answers a stored habit would have given.
+         *
+         * Optional fields come back as `""` rather than null, because the draft is what the text
+         * fields are bound to and a null there is a crash, not an empty box.
+         */
+        public fun of(habit: Habit, reminder: Reminder?): HabitDraft {
+            val everyN = habit.schedule as? ScheduleRule.EveryNDays
+            val weekly = habit.schedule as? ScheduleRule.TimesPerWeek
+            return HabitDraft(
+                name = habit.name,
+                type = habit.type,
+                identityPhrase = habit.identityPhrase.orEmpty(),
+                unit = habit.unit.orEmpty(),
+                target = habit.target?.asTargetText().orEmpty(),
+                minimumVersion = habit.minimumVersion.orEmpty(),
+                cue = habit.cue.orEmpty(),
+                copingPlan = habit.copingPlan.orEmpty(),
+                scheduleKind = habit.schedule.kind(),
+                specificDays = (habit.schedule as? ScheduleRule.SpecificDays)?.days.orEmpty(),
+                timesPerWeek = weekly?.times ?: DEFAULT_TIMES_PER_WEEK,
+                everyNDays = everyN?.n ?: DEFAULT_EVERY_N,
+                reminderEnabled = reminder?.enabled == true,
+                reminderTime = reminder?.time ?: DEFAULT_REMINDER_TIME,
+                everyNAnchor = everyN?.anchor,
+                weekStart = weekly?.weekStart ?: DayOfWeek.MONDAY,
+            )
+        }
+    }
 }
+
+private fun ScheduleRule.kind(): ScheduleKind = when (this) {
+    ScheduleRule.Daily -> ScheduleKind.DAILY
+    is ScheduleRule.SpecificDays -> ScheduleKind.SPECIFIC_DAYS
+    is ScheduleRule.TimesPerWeek -> ScheduleKind.TIMES_PER_WEEK
+    is ScheduleRule.EveryNDays -> ScheduleKind.EVERY_N_DAYS
+}
+
+/** A target of 5.0 was typed into a box as "5", and that is what belongs back in the box. */
+private fun Double.asTargetText(): String =
+    if (this == truncate(this)) toLong().toString() else toString()

@@ -9,9 +9,6 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.sprout.core.database.repository.HabitRepository
 import dev.sprout.core.database.repository.ReminderRepository
-import dev.sprout.core.model.Habit
-import dev.sprout.core.model.HabitType
-import dev.sprout.core.model.Reminder
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -71,47 +68,23 @@ public class HabitCreationViewModel @Inject constructor(
      */
     public fun save() {
         val state = _uiState.value
-        val incomplete = CreationStep.entries.any { !state.draft.canLeave(it) }
-        if (state.isSaving || state.savedHabitId != null || incomplete) return
+        if (state.isSaving || state.savedHabitId != null || !state.draft.isComplete) return
         _uiState.update { it.copy(isSaving = true) }
 
         viewModelScope.launch {
             val draft = state.draft
             val now = clock.instant()
-            val today = LocalDate.now(clock)
             val saved = habits.save(
-                Habit(
-                    name = draft.name.trim(),
-                    type = draft.type,
-                    schedule = draft.scheduleRule(anchor = today),
-                    identityPhrase = draft.identityPhrase.trimToNull(),
-                    minimumVersion = draft.minimumVersion.trimToNull(),
-                    cue = draft.cue.trimToNull(),
-                    copingPlan = draft.copingPlan.trimToNull(),
-                    unit = draft.unit.trimToNull().takeIf { draft.type == HabitType.DO_NUMERIC },
-                    target = draft.targetValue.takeIf { draft.type == HabitType.DO_NUMERIC },
-                    // Appended to the end of the list. Without this every habit lands at 0 and
-                    // Today's tie-break sort becomes arbitrary.
+                draft.toNewHabit(
+                    now = now,
+                    today = LocalDate.now(clock),
                     position = habits.observeActive().first().size,
-                    createdAt = now,
-                    updatedAt = now,
                 ),
             )
             if (draft.reminderEnabled) {
-                reminders.save(
-                    Reminder(
-                        habitId = saved.id,
-                        time = draft.reminderTime,
-                        daysMask = draft.reminderDaysMask(),
-                        createdAt = now,
-                        updatedAt = now,
-                    ),
-                )
+                reminders.save(draft.toNewReminder(habitId = saved.id, now = now))
             }
             _uiState.update { it.copy(isSaving = false, savedHabitId = saved.id) }
         }
     }
 }
-
-/** Blank optional fields are stored as null, never as "" — one absent value, not two. */
-private fun String.trimToNull(): String? = trim().ifBlank { null }

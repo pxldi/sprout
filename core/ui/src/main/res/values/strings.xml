@@ -131,4 +131,40 @@
     <string name="perm_exact_action">Allow exact timing</string>
     <!-- On Today, where the reminder was set some time ago and has been quietly failing since. -->
     <string name="perm_reminders_silenced">Your reminders aren\'t arriving — notifications are turned off for Sprout.</string>
+    <!--
+      Editing. The wizard's questions without the wizard's voice: somebody who came to move a
+      reminder by ten minutes should not be talked through a decision they made months ago. The
+      headings are labels, not questions — their job is to be findable.
+    -->
+    <string name="edit_title">Edit habit</string>
+    <string name="edit_save">Save changes</string>
+    <!-- Headings that say something the field label underneath does not already say:
+         "Smallest version" over a box labelled "Smallest version" is furniture. -->
+    <string name="edit_section_habit">What you\'re building</string>
+    <string name="edit_section_smallest">On a bad day</string>
+    <string name="edit_section_cue">When and where</string>
+    <string name="edit_section_coping">When it goes wrong</string>
+    <string name="edit_section_schedule">How often</string>
+    <string name="edit_section_reminder">Reminder</string>
+
+    <!-- States the two consequences plainly. Archiving is reversible, so nothing here warns. -->
+    <string name="edit_archived_body">Archived. It\'s off Today, and its reminder won\'t fire.</string>
+    <string name="edit_archive">Archive</string>
+    <string name="edit_restore">Restore</string>
+    <string name="edit_delete">Delete</string>
+
+    <!-- Names what is lost and names the gentler option. "Are you sure?" is not information. -->
+    <string name="edit_delete_title">Delete %1$s?</string>
+    <string name="edit_delete_body">Every day you logged for it goes with it. Archiving takes it off Today and keeps the history.</string>
+    <string name="edit_delete_keep">Keep it</string>
+
+    <string name="edit_discard_title">Leave without saving?</string>
+    <string name="edit_discard">Discard</string>
+    <string name="edit_keep_editing">Keep editing</string>
+
+    <!-- Today shows what is due today; this is where the rest of them are. -->
+    <string name="habits_title">All habits</string>
+    <string name="habits_archived">Archived</string>
+    <string name="habits_empty">Nothing here yet. Habits you add will be listed here, archived ones included.</string>
+    <string name="action_edit">Edit habit</string>
 </resources>
