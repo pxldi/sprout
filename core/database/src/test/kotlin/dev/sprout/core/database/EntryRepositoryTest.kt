@@ -115,4 +115,89 @@ class EntryRepositoryTest {
         entries.toggle(h.id, TEST_START, EntrySource.NOTIFICATION)
         assertEquals(EntrySource.NOTIFICATION, entries.find(h.id, TEST_START)?.source)
     }
+
+    @Test
+    fun `a note survives the day being un-ticked and ticked again`() = runTest {
+        val h = habits.save(habit())
+        entries.log(h.id, TEST_START, EntryStatus.DONE)
+        entries.note(h.id, TEST_START, "shoulder was sore, went shorter")
+
+        // Un-ticking tombstones the row; ticking again revives it. Neither tap knows or should
+        // know anything about notes, and neither may take the user's sentence with it.
+        entries.toggle(h.id, TEST_START)
+        entries.toggle(h.id, TEST_START)
+
+        assertEquals("shoulder was sore, went shorter", entries.find(h.id, TEST_START)?.note)
+    }
+
+    @Test
+    fun `changing the day's status leaves the note alone`() = runTest {
+        val h = habits.save(habit())
+        entries.log(h.id, TEST_START, EntryStatus.DONE)
+        entries.note(h.id, TEST_START, "did it before work")
+
+        entries.log(h.id, TEST_START, EntryStatus.SKIP)
+
+        val stored = entries.find(h.id, TEST_START)
+        assertEquals(EntryStatus.SKIP, stored?.status)
+        assertEquals("did it before work", stored?.note)
+    }
+
+    @Test
+    fun `writing a note does not decide what the day was`() = runTest {
+        val h = habits.save(habit())
+        entries.log(h.id, TEST_START, EntryStatus.SKIP, source = EntrySource.WIDGET)
+
+        entries.note(h.id, TEST_START, "away for work")
+
+        val stored = entries.find(h.id, TEST_START)
+        assertEquals(EntryStatus.SKIP, stored?.status)
+        assertEquals(EntrySource.WIDGET, stored?.source)
+    }
+
+    @Test
+    fun `a note on a day that was never logged is not a log`() = runTest {
+        val h = habits.save(habit())
+
+        entries.note(h.id, TEST_START, "meant to, did not")
+
+        // The absence of a row is what a miss means. Conjuring one to hold a sentence would make
+        // an unanswered day look answered, everywhere that reads the log.
+        assertNull(entries.find(h.id, TEST_START))
+        assertEquals(0, entries.observeForHabit(h.id).first().size)
+    }
+
+    @Test
+    fun `a cleared day is not quietly revived by a note`() = runTest {
+        val h = habits.save(habit())
+        entries.log(h.id, TEST_START, EntryStatus.DONE)
+        entries.clear(h.id, TEST_START)
+
+        entries.note(h.id, TEST_START, "typed after it was cleared elsewhere")
+
+        assertNull(entries.find(h.id, TEST_START), "a tombstoned day stays cleared")
+    }
+
+    @Test
+    fun `emptying the field removes the note`() = runTest {
+        val h = habits.save(habit())
+        entries.log(h.id, TEST_START, EntryStatus.DONE)
+        entries.note(h.id, TEST_START, "first thoughts")
+
+        entries.note(h.id, TEST_START, "   ")
+
+        val stored = entries.find(h.id, TEST_START)
+        assertNull(stored?.note, "blank means remove, not store whitespace")
+        assertEquals(EntryStatus.DONE, stored?.status, "removing a note is not un-logging the day")
+    }
+
+    @Test
+    fun `a note is stored as written, less the stray whitespace around it`() = runTest {
+        val h = habits.save(habit())
+        entries.log(h.id, TEST_START, EntryStatus.DONE)
+
+        entries.note(h.id, TEST_START, "  rained the whole way  ")
+
+        assertEquals("rained the whole way", entries.find(h.id, TEST_START)?.note)
+    }
 }

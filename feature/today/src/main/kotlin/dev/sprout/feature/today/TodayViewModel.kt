@@ -93,6 +93,16 @@ public class TodayViewModel @Inject constructor(
         viewModelScope.launch { entries.toggle(habitId, today) }
     }
 
+    /**
+     * Saves the user's own words about today, or clears them when the text is blank.
+     *
+     * Only ever an annotation: it cannot log a day, and does not change the status of one that
+     * is logged. Writing "shoulder hurt" must not decide on the user's behalf what that day was.
+     */
+    public fun note(habitId: String, text: String) {
+        viewModelScope.launch { entries.note(habitId, today, text) }
+    }
+
     private fun log(habitId: String, status: EntryStatus, source: EntrySource) {
         viewModelScope.launch { entries.log(habitId, today, status, source = source) }
     }
@@ -111,13 +121,14 @@ private fun Habit.toItem(entries: List<Entry>, reminder: LocalTime?, date: Local
         entries = entries.map { DayLog(it.date, it.status) },
         today = date,
     )
-    val todayStatus = entries.firstOrNull { it.date == date }?.status
+    val todayEntry = entries.firstOrNull { it.date == date }
     return TodayItem(
         habit = this,
         progress = progress,
-        todayStatus = todayStatus,
+        todayStatus = todayEntry?.status,
+        todayNote = todayEntry?.note,
         reminderAt = reminder,
-        gentleNote = progress.gentleNote(date, todayStatus),
+        gentleNote = progress.gentleNote(date, todayEntry?.status),
     )
 }
 

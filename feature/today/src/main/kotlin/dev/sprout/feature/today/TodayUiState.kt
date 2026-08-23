@@ -22,11 +22,21 @@ public data class TodayItem(
     val progress: HabitProgress,
     /** Null when the day has not been logged. That is a blank slate, not a failure. */
     val todayStatus: EntryStatus?,
+    /** What the user wrote about today, if anything. Their words, shown back to them verbatim. */
+    val todayNote: String?,
     val reminderAt: LocalTime?,
     val gentleNote: GentleNote?,
 ) {
     public val isDone: Boolean get() = todayStatus?.isCompletion == true
     public val isSkipped: Boolean get() = todayStatus == EntryStatus.SKIP
+
+    /**
+     * Whether today can be annotated.
+     *
+     * A note hangs off a logged day. Writing one for a day with no row would have to invent a
+     * row, and this app reads the absence of one as the miss — see `EntryRepository.note`.
+     */
+    public val canNote: Boolean get() = todayStatus != null
 }
 
 /** The small set of things Today is allowed to say about a miss. There is no fourth option. */
@@ -93,4 +103,6 @@ public data class TodayActions(
     val onClear: (String) -> Unit = {},
     /** Opens the habit's own screen. Editing lives one tap further in, on that screen. */
     val onOpen: (String) -> Unit = {},
+    /** Writes, rewrites or clears today's note. Blank text removes it. */
+    val onNote: (String, String) -> Unit = { _, _ -> },
 )

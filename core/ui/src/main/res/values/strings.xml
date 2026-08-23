@@ -43,6 +43,26 @@
     <string name="action_close">Close</string>
 
     <!--
+      Notes. The user's own words about a day, kept as they typed them and never interpreted.
+      Nothing here asks why, and nothing calls a note an excuse or a reason: "Ran the short loop
+      instead" is a fact about a Tuesday, and the app has no opinion about it.
+
+      A note hangs off a day that was logged. There is deliberately no way to write one on a day
+      with no entry — the absence of that row is what a miss means, and inventing one to hold a
+      sentence would make Today treat the day as answered.
+    -->
+    <string name="action_note_add">Add a note</string>
+    <string name="action_note_edit">Edit note</string>
+    <string name="note_dialog_title">Note for today</string>
+    <string name="note_label">Note</string>
+    <!-- An observation, not a justification. The example sets the tone for what people write. -->
+    <string name="note_hint">Ran the short loop instead</string>
+    <string name="note_save">Save</string>
+    <string name="note_cancel">Cancel</string>
+    <!-- Says what clearing the field does, so removing a note is never a guess. -->
+    <string name="note_clear_help">Leave it empty to remove the note.</string>
+
+    <!--
       Habit creation. One question per screen: the cue and the coping plan are the intervention,
       and on a single scrolling form they are the two fields everybody skips.
     -->

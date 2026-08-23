@@ -19,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ListAlt
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.outlined.EditNote
 import androidx.compose.material.icons.outlined.EventBusy
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Button
@@ -32,6 +33,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberSwipeToDismissBoxState
@@ -79,6 +81,7 @@ public fun TodayRoute(
             onMinimum = viewModel::completeMinimum,
             onClear = viewModel::clear,
             onOpen = onOpenHabit,
+            onNote = viewModel::note,
         ),
         modifier = modifier,
     )
@@ -93,6 +96,7 @@ public fun TodayScreen(
     permissions: ReminderPermissions = rememberReminderPermissions(),
 ) {
     var sheetFor by remember { mutableStateOf<TodayItem?>(null) }
+    var noteFor by remember { mutableStateOf<TodayItem?>(null) }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -109,44 +113,84 @@ public fun TodayScreen(
             }
         },
     ) { inner ->
-        Column(modifier = Modifier.padding(inner).fillMaxSize()) {
-            // Above the list rather than in it: a reminder that is not arriving is true all day,
-            // and a warning that scrolls away is a warning the user will not see again.
-            if (state.hasReminders && permissions.notifications != NotificationAccess.GRANTED) {
-                RemindersSilencedBanner(
-                    onOpenSettings = permissions::openNotificationSettings,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                )
-            }
-            if (state.isFirstRun) {
-                FirstRunToday(onAddHabit = actions.onAddHabit)
-            } else if (state.nothingScheduled) {
-                NothingDueToday()
-            } else {
-                LazyColumn(modifier = Modifier.fillMaxSize()) {
-                    items(state.items, key = { it.habit.id }) { item ->
-                        SwipeableHabitRow(
-                            item = item,
-                            onToggle = { actions.onToggle(item.habit.id) },
-                            onSkip = { actions.onSkip(item.habit.id) },
-                            onMore = { sheetFor = item },
-                        )
-                        HorizontalDivider()
-                    }
-                }
-            }
-        }
+        TodayContent(
+            state = state,
+            actions = actions,
+            permissions = permissions,
+            onNote = { noteFor = it },
+            onMore = { sheetFor = it },
+            modifier = Modifier.padding(inner),
+        )
     }
 
     sheetFor?.let { item ->
         ModalBottomSheet(onDismissRequest = { sheetFor = null }) {
             HabitOptions(
                 item = item,
-                onSkip = { actions.onSkip(item.habit.id); sheetFor = null },
-                onMinimum = { actions.onMinimum(item.habit.id); sheetFor = null },
-                onClear = { actions.onClear(item.habit.id); sheetFor = null },
-                onOpen = { actions.onOpen(item.habit.id); sheetFor = null },
+                actions = SheetActions(
+                    onSkip = { actions.onSkip(item.habit.id); sheetFor = null },
+                    onMinimum = { actions.onMinimum(item.habit.id); sheetFor = null },
+                    onClear = { actions.onClear(item.habit.id); sheetFor = null },
+                    onOpen = { actions.onOpen(item.habit.id); sheetFor = null },
+                    // Closes the sheet on the way: two layers of scrim over one text field is a
+                    // lot of chrome for a sentence.
+                    onNote = { noteFor = item; sheetFor = null },
+                ),
             )
+        }
+    }
+
+    noteFor?.let { item ->
+        NoteDialog(
+            item = item,
+            onSave = { text -> actions.onNote(item.habit.id, text); noteFor = null },
+            onDismiss = { noteFor = null },
+        )
+    }
+}
+
+/**
+ * Everything under the app bar.
+ *
+ * Split out from [TodayScreen] so that screen reads as what it is: a Scaffold, a sheet and a
+ * dialog. The two `on…` callbacks hand a whole item back rather than an id, because both of them
+ * open something *about* that item and the caller would only have to look it up again.
+ */
+@Composable
+private fun TodayContent(
+    state: TodayUiState,
+    actions: TodayActions,
+    permissions: ReminderPermissions,
+    onNote: (TodayItem) -> Unit,
+    onMore: (TodayItem) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier.fillMaxSize()) {
+        // Above the list rather than in it: a reminder that is not arriving is true all day,
+        // and a warning that scrolls away is a warning the user will not see again.
+        if (state.hasReminders && permissions.notifications != NotificationAccess.GRANTED) {
+            RemindersSilencedBanner(
+                onOpenSettings = permissions::openNotificationSettings,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            )
+        }
+        if (state.isFirstRun) {
+            FirstRunToday(onAddHabit = actions.onAddHabit)
+        } else if (state.nothingScheduled) {
+            NothingDueToday()
+        } else {
+            LazyColumn(modifier = Modifier.fillMaxSize()) {
+                items(state.items, key = { it.habit.id }) { item ->
+                    SwipeableHabitRow(
+                        item = item,
+                        onToggle = { actions.onToggle(item.habit.id) },
+                        onSkip = { actions.onSkip(item.habit.id) },
+                        onNote = { onNote(item) },
+                        onMore = { onMore(item) },
+                    )
+                    HorizontalDivider()
+                }
+            }
         }
     }
 }
@@ -183,12 +227,15 @@ private fun TodayTopBar(state: TodayUiState, onManageHabits: () -> Unit) {
 }
 
 /**
- * Swipe left to skip today.
+ * Swipe left to skip today, right to write a note about it.
  *
- * The row is put back afterwards rather than removed: a skip is a neutral log, not a deletion,
- * and the habit belongs on today's list either way. The feedback is the "Skipped today" line
- * appearing underneath, not the row disappearing. Skipping stays reversible from the overflow
- * sheet, which also remains the path for anyone who cannot make the gesture.
+ * The row is put back after either one rather than removed: both are logs, not deletions, and the
+ * habit belongs on today's list whichever way it went. The feedback is the line that appears
+ * underneath — "Skipped today", or the note itself — not the row disappearing.
+ *
+ * The note swipe is only enabled once the day has been logged, because a note hangs off a logged
+ * day; on an untouched row the gesture does nothing and reveals nothing. Both actions stay in the
+ * overflow sheet, which remains the path for anyone who cannot make the gesture at all.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -196,41 +243,61 @@ private fun SwipeableHabitRow(
     item: TodayItem,
     onToggle: () -> Unit,
     onSkip: () -> Unit,
+    onNote: () -> Unit,
     onMore: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
     val swipeState = rememberSwipeToDismissBoxState()
     SwipeToDismissBox(
         state = swipeState,
-        enableDismissFromStartToEnd = false,
-        onDismiss = {
-            onSkip()
+        enableDismissFromStartToEnd = item.canNote,
+        onDismiss = { direction ->
+            when (direction) {
+                SwipeToDismissBoxValue.StartToEnd -> onNote()
+                SwipeToDismissBoxValue.EndToStart -> onSkip()
+                // Never delivered on a dismiss; listed so a new value cannot silently become a
+                // skip, which is the one of the two that writes to the log unprompted.
+                SwipeToDismissBoxValue.Settled -> Unit
+            }
             scope.launch { swipeState.reset() }
         },
-        backgroundContent = { SkipBackground() },
+        backgroundContent = {
+            SwipeBackground(direction = swipeState.dismissDirection, hasNote = item.todayNote != null)
+        },
     ) {
         HabitRow(item = item, onToggle = onToggle, onMore = onMore)
     }
 }
 
+/** What sits behind the row mid-swipe: which one depends on which way it is going. */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun SkipBackground() {
+private fun SwipeBackground(direction: SwipeToDismissBoxValue, hasNote: Boolean) {
+    if (direction == SwipeToDismissBoxValue.Settled) return
+    val noting = direction == SwipeToDismissBoxValue.StartToEnd
     Row(
         modifier = Modifier
-            // Deliberately not the error colour. Skipping on purpose is a decision, not a failure.
+            // Deliberately not the error colour, either way. Skipping on purpose is a decision,
+            // and writing something down is just writing something down.
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.surfaceVariant)
             .padding(horizontal = 24.dp, vertical = 20.dp),
-        horizontalArrangement = Arrangement.End,
+        horizontalArrangement = if (noting) Arrangement.Start else Arrangement.End,
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
-            imageVector = Icons.Outlined.EventBusy,
+            imageVector = if (noting) Icons.Outlined.EditNote else Icons.Outlined.EventBusy,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Text(
-            text = stringResource(R.string.action_skip),
+            text = stringResource(
+                when {
+                    noting && hasNote -> R.string.action_note_edit
+                    noting -> R.string.action_note_add
+                    else -> R.string.action_skip
+                },
+            ),
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(start = 8.dp),
@@ -299,6 +366,15 @@ private fun RowSupport(item: TodayItem) {
             },
             style = MaterialTheme.typography.bodySmall,
         )
+        // Read back verbatim, and never truncated with an ellipsis: it is one line the user
+        // wrote themselves, and hiding half of it would mean opening a dialog to reread it.
+        item.todayNote?.takeIf { it.isNotBlank() }?.let { note ->
+            Text(
+                text = note,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
         if (item.isSkipped) {
             Text(
                 text = stringResource(R.string.status_skipped),
@@ -323,14 +399,22 @@ private fun GentleNote.stringRes(): Int = when (this) {
     GentleNote.BOUNCED_BACK -> R.string.note_bounced_back
 }
 
+/**
+ * What the overflow sheet can do to one habit's today.
+ *
+ * Grouped rather than passed one by one: they all close the sheet as well as acting, so every
+ * one of them is a two-part lambda the sheet itself must not be trusted to remember.
+ */
+private data class SheetActions(
+    val onSkip: () -> Unit,
+    val onMinimum: () -> Unit,
+    val onClear: () -> Unit,
+    val onOpen: () -> Unit,
+    val onNote: () -> Unit,
+)
+
 @Composable
-private fun HabitOptions(
-    item: TodayItem,
-    onSkip: () -> Unit,
-    onMinimum: () -> Unit,
-    onClear: () -> Unit,
-    onOpen: () -> Unit,
-) {
+private fun HabitOptions(item: TodayItem, actions: SheetActions) {
     Column(Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
         Text(
             text = item.habit.name,
@@ -339,25 +423,44 @@ private fun HabitOptions(
         )
         item.habit.minimumVersion?.let { smallest ->
             ListItem(
-                modifier = Modifier.toggleable(value = false, onValueChange = { onMinimum() }),
+                modifier = Modifier.toggleable(value = false, onValueChange = { actions.onMinimum() }),
                 headlineContent = { Text(stringResource(R.string.action_minimum)) },
                 supportingContent = { Text(smallest) },
             )
         }
         ListItem(
-            modifier = Modifier.toggleable(value = false, onValueChange = { onSkip() }),
+            modifier = Modifier.toggleable(value = false, onValueChange = { actions.onSkip() }),
             headlineContent = { Text(stringResource(R.string.action_skip)) },
         )
+        // Gated exactly like Clear, and for the same reason: both act on today's entry, and
+        // there is no entry to act on until the day is logged.
+        if (item.canNote) {
+            ListItem(
+                modifier = Modifier.clickable(onClick = actions.onNote),
+                headlineContent = {
+                    Text(
+                        stringResource(
+                            if (item.todayNote.isNullOrBlank()) {
+                                R.string.action_note_add
+                            } else {
+                                R.string.action_note_edit
+                            },
+                        ),
+                    )
+                },
+                supportingContent = item.todayNote?.takeIf { it.isNotBlank() }?.let { { Text(it) } },
+            )
+        }
         if (item.todayStatus != null) {
             ListItem(
-                modifier = Modifier.toggleable(value = false, onValueChange = { onClear() }),
+                modifier = Modifier.toggleable(value = false, onValueChange = { actions.onClear() }),
                 headlineContent = { Text(stringResource(R.string.action_clear)) },
             )
         }
         // Last, and separated: everything above logs today, this one leaves Today entirely.
         HorizontalDivider(Modifier.padding(vertical = 8.dp))
         ListItem(
-            modifier = Modifier.clickable(onClick = onOpen),
+            modifier = Modifier.clickable(onClick = actions.onOpen),
             headlineContent = { Text(stringResource(R.string.action_open)) },
         )
     }

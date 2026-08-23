@@ -40,16 +40,6 @@ public class EntryRepository internal constructor(
     public fun observeForHabit(habitId: String): Flow<List<Entry>> =
         dao.observeForHabit(habitId).map { rows -> rows.map { it.toDomain() } }
 
-    public fun observeForHabitBetween(
-        habitId: String,
-        from: LocalDate,
-        to: LocalDate,
-    ): Flow<List<Entry>> =
-        dao.observeForHabitBetween(habitId, from, to).map { rows -> rows.map { it.toDomain() } }
-
-    public fun observeOn(date: LocalDate): Flow<List<Entry>> =
-        dao.observeOn(date).map { rows -> rows.map { it.toDomain() } }
-
     /** Every live entry, grouped by habit — what the Today screen feeds to the scorer. */
     public fun observeAllByHabit(): Flow<Map<String, List<Entry>>> =
         dao.observeAll().map { rows -> rows.map { it.toDomain() }.groupBy(Entry::habitId) }
@@ -57,6 +47,14 @@ public class EntryRepository internal constructor(
     public suspend fun find(habitId: String, date: LocalDate): Entry? =
         dao.findOn(habitId, date)?.toDomain()
 
+    /**
+     * Logs a day, or re-logs one that was already logged.
+     *
+     * A null [note] means "leave whatever is there", not "clear it". Every status write goes
+     * through here — the checkbox, the widget, the notification action — and none of them know
+     * anything about notes; if null overwrote, ticking a box would silently delete the sentence
+     * the user wrote about that day. [note] is the one way to change or remove one.
+     */
     public suspend fun log(
         habitId: String,
         date: LocalDate,
@@ -65,6 +63,33 @@ public class EntryRepository internal constructor(
         note: String? = null,
         source: EntrySource = EntrySource.MANUAL,
     ): Entry = writes.withLock { writeLog(habitId, date, status, value, note, source) }
+
+    /**
+     * Attaches the user's own words to a day they logged, or removes them when [text] is blank.
+     *
+     * Annotates an existing row and never creates one. A note is not a log: a row conjured for
+     * one would make a day the user never logged look logged, and this app reads that row's
+     * absence as the miss. Today would stop saying "one miss changes almost nothing" on the very
+     * day somebody wrote down why they missed, and would offer to clear a day with nothing on it.
+     *
+     * A day worth writing about but not doing already has an honest status: [EntryStatus.SKIP],
+     * or [EntryStatus.LAPSE] for a habit being given up. Both are logs the user chose.
+     *
+     * A no-op when the day is not logged. That is a race — cleared from the notification, or on
+     * another device, while the dialog was open — and losing the sentence beats throwing on the
+     * way out of a text field.
+     */
+    public suspend fun note(habitId: String, date: LocalDate, text: String?) {
+        writes.withLock {
+            val existing = dao.findOn(habitId, date) ?: return@withLock
+            dao.upsert(
+                existing.copy(
+                    note = text?.trim()?.takeIf { it.isNotEmpty() },
+                    updatedAt = now(),
+                ),
+            )
+        }
+    }
 
     /**
      * The body of [log] without the lock, so callers already holding it can reuse it.
@@ -90,7 +115,9 @@ public class EntryRepository internal constructor(
             date = date,
             status = status,
             value = value,
-            note = note,
+            // Null means unchanged — see [log]. The same argument applies to `value`, which does
+            // not yet have a caller that would notice.
+            note = note ?: existing?.note,
             source = source,
             createdAt = existing?.createdAt ?: at,
             updatedAt = at,

@@ -24,18 +24,6 @@ internal interface EntryDao {
     )
     fun observeForHabit(habitId: String): Flow<List<EntryEntity>>
 
-    @Query(
-        """
-        SELECT * FROM entry
-        WHERE habit_id = :habitId AND deleted_at IS NULL AND date >= :from AND date <= :to
-        ORDER BY date ASC
-        """,
-    )
-    fun observeForHabitBetween(habitId: String, from: LocalDate, to: LocalDate): Flow<List<EntryEntity>>
-
-    @Query("SELECT * FROM entry WHERE date = :date AND deleted_at IS NULL")
-    fun observeOn(date: LocalDate): Flow<List<EntryEntity>>
-
     /**
      * Every live entry, for every habit.
      *

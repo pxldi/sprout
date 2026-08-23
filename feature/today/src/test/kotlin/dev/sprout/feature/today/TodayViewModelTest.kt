@@ -236,6 +236,52 @@ class TodayViewModelTest {
     }
 
     @Test
+    fun `a note is offered only once the day has been logged`() = runTest {
+        val habit = stack.addHabit(name = "Run")
+        val model = viewModel()
+
+        model.uiState.test {
+            assertFalse(awaitLoaded().items.single().canNote, "nothing to hang a note on yet")
+
+            model.complete(habit.id)
+            assertTrue(awaitUntilItem { it.items.single().canNote }.canNote)
+        }
+    }
+
+    @Test
+    fun `writing a note leaves the day exactly as it was logged`() = runTest {
+        val habit = stack.addHabit(name = "Run")
+        val model = viewModel()
+        model.skip(habit.id)
+
+        model.note(habit.id, "away for work")
+
+        model.uiState.test {
+            val item = awaitUntilItem { it.items.single().todayNote != null }
+            assertEquals("away for work", item.todayNote)
+            // The sentence describes the day; it does not decide what the day was.
+            assertEquals(EntryStatus.SKIP, item.todayStatus)
+            assertTrue(item.isSkipped)
+        }
+    }
+
+    @Test
+    fun `a note on an untouched day changes nothing`() = runTest {
+        val habit = stack.addHabit(name = "Run")
+        val model = viewModel()
+
+        model.note(habit.id, "meant to, did not")
+
+        model.uiState.test {
+            val item = awaitLoaded().items.single()
+            assertNull(item.todayStatus, "a note must not log the day")
+            assertNull(item.todayNote)
+            // And so the one line Today is allowed to say about a miss still gets to say it.
+            assertFalse(item.isDone)
+        }
+    }
+
+    @Test
     fun `an archived habit's leftover reminder is not`() = runTest {
         // Nothing was going to fire for it, so warning about it would be warning about nothing.
         val habit = stack.addHabit(name = "Run")
@@ -253,3 +299,13 @@ private suspend fun app.cash.turbine.TurbineTestContext<TodayUiState>.awaitLoade
     while (state.isLoading) state = awaitItem()
     return state
 }
+
+/** Waits for the write that is already in flight to land, rather than guessing at emissions. */
+private suspend fun app.cash.turbine.TurbineTestContext<TodayUiState>.awaitUntilItem(
+    predicate: (TodayUiState) -> Boolean,
+): TodayItem {
+    var state = awaitLoaded()
+    while (!predicate(state)) state = awaitItem()
+    return state.items.single()
+}
+
