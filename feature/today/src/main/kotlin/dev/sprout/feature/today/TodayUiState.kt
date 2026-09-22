@@ -111,6 +111,7 @@ public data class TodayUiState(
 public data class TodayActions(
     val onAddHabit: () -> Unit = {},
     val onManageHabits: () -> Unit = {},
+    val onOpenSettings: () -> Unit = {},
     val onToggle: (String) -> Unit = {},
     val onSkip: (String) -> Unit = {},
     val onMinimum: (String) -> Unit = {},

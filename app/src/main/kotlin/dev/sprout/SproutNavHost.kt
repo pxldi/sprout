@@ -15,11 +15,13 @@ import dev.sprout.feature.habit.EditHabitRoute
 import dev.sprout.feature.habit.HABIT_ID_ARG
 import dev.sprout.feature.habit.HabitDetailRoute
 import dev.sprout.feature.habit.HabitListRoute
+import dev.sprout.feature.settings.SettingsRoute
 import dev.sprout.feature.today.TodayRoute
 
 private const val TODAY_ROUTE = "today"
 private const val CREATE_HABIT_ROUTE = "habit/new"
 private const val HABIT_LIST_ROUTE = "habits"
+private const val SETTINGS_ROUTE = "settings"
 private const val EDIT_HABIT_ROUTE = "habit/{$HABIT_ID_ARG}/edit"
 
 /**
@@ -45,6 +47,7 @@ internal fun SproutNavHost() {
                 onAddHabit = { navController.navigate(CREATE_HABIT_ROUTE) },
                 onOpenHabit = { id -> navController.navigate(habitDetailRoute(id)) },
                 onManageHabits = { navController.navigate(HABIT_LIST_ROUTE) },
+                onOpenSettings = { navController.navigate(SETTINGS_ROUTE) },
             )
         }
         composable(CREATE_HABIT_ROUTE) {
@@ -56,6 +59,9 @@ internal fun SproutNavHost() {
             CreateHabitRoute(
                 onFinished = { navController.popBackStack(CREATE_HABIT_ROUTE, inclusive = true) },
             )
+        }
+        composable(SETTINGS_ROUTE) {
+            SettingsRoute(onBack = { navController.popBackStack(SETTINGS_ROUTE, inclusive = true) })
         }
         composable(HABIT_LIST_ROUTE) {
             HabitListRoute(

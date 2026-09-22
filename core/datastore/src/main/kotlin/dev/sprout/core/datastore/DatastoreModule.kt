@@ -27,4 +27,9 @@ public object DatastoreModule {
     @Singleton
     public fun shineHistory(@ApplicationContext context: Context): ShineHistory =
         dev.sprout.core.datastore.shineHistory(context)
+
+    @Provides
+    @Singleton
+    public fun backupSettings(@ApplicationContext context: Context): BackupSettings =
+        dev.sprout.core.datastore.backupSettings(context)
 }

@@ -8,6 +8,8 @@ import android.app.Application
 import dagger.hilt.android.HiltAndroidApp
 import dev.sprout.core.database.repository.HabitRepository
 import dev.sprout.core.database.repository.ReminderRepository
+import dev.sprout.core.datastore.BackupSettings
+import dev.sprout.feature.settings.DailyCopySchedule
 import dev.sprout.reminder.ReminderScheduler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -15,6 +17,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import javax.inject.Inject
 
@@ -26,6 +29,8 @@ class SproutApplication : Application() {
     @Inject lateinit var reminders: ReminderRepository
 
     @Inject lateinit var scheduler: ReminderScheduler
+
+    @Inject lateinit var backupSettings: BackupSettings
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
@@ -49,6 +54,14 @@ class SproutApplication : Application() {
         }
             .distinctUntilChanged()
             .onEach { scheduler.reschedule() }
+            .launchIn(scope)
+
+        // The same pattern for the daily copy: Settings changes the folder, this keeps the
+        // periodic work in step, and WorkManager itself survives reboots.
+        backupSettings.state
+            .map { it.folder != null }
+            .distinctUntilChanged()
+            .onEach { on -> DailyCopySchedule.apply(this, on) }
             .launchIn(scope)
     }
 }

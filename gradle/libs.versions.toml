@@ -19,6 +19,7 @@ room = "2.8.4"
 datastore = "1.2.1"
 glance = "1.1.1"
 work = "2.11.2"
+documentfile = "1.1.0"
 healthConnect = "1.1.0"
 
 # DI
@@ -65,6 +66,7 @@ androidx-datastore-preferences = { module = "androidx.datastore:datastore-prefer
 androidx-glance-appwidget = { module = "androidx.glance:glance-appwidget", version.ref = "glance" }
 androidx-glance-material3 = { module = "androidx.glance:glance-material3", version.ref = "glance" }
 androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "work" }
+androidx-documentfile = { module = "androidx.documentfile:documentfile", version.ref = "documentfile" }
 androidx-health-connect-client = { module = "androidx.health.connect:connect-client", version.ref = "healthConnect" }
 
 hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hilt" }
