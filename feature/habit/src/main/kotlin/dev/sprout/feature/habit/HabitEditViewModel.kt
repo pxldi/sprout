@@ -145,7 +145,7 @@ public class HabitEditViewModel @Inject constructor(
             it.copy(
                 draft = HabitDraft.of(loaded, existing),
                 savedDraft = HabitDraft.of(loaded, existing),
-                storedName = loaded.name,
+                storedName = loaded.displayName,
                 isLoading = false,
                 isArchived = loaded.isArchived,
             )

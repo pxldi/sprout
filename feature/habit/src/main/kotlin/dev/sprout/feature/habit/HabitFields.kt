@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -15,10 +16,13 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import dev.sprout.core.model.HabitType
@@ -59,6 +63,50 @@ internal fun NameAndTypeFields(draft: HabitDraft, onEdit: Edit) {
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
         )
+        PrivacyFields(draft, onEdit)
+    }
+}
+
+/**
+ * Asked with the name, because the name is what it protects, and before the reminder step, so a
+ * private habit's first reminder already leaves the name out.
+ */
+@Composable
+private fun PrivacyFields(draft: HabitDraft, onEdit: Edit) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        // The whole row toggles, for the same reason as the reminder switch: one node with a label.
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .toggleable(
+                    value = draft.isPrivate,
+                    role = Role.Switch,
+                    onValueChange = { on -> onEdit { it.copy(isPrivate = on) } },
+                ),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(Modifier.weight(1f)) {
+                Text(stringResource(R.string.create_private_label))
+                Text(
+                    text = stringResource(R.string.create_private_help),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Switch(checked = draft.isPrivate, onCheckedChange = null)
+        }
+        if (draft.isPrivate) {
+            OutlinedTextField(
+                value = draft.alias,
+                onValueChange = { alias -> onEdit { it.copy(alias = alias) } },
+                label = { Text(stringResource(R.string.create_alias_label)) },
+                placeholder = { Text(stringResource(R.string.create_alias_hint)) },
+                supportingText = { Text(stringResource(R.string.create_alias_help)) },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
     }
 }
 

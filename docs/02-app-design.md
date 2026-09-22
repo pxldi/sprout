@@ -93,7 +93,7 @@ Fresh-start nudges: the app suggests creating or restarting habits on Mondays, t
 - **Modules**: `:app`, `:core:model`, `:core:database` (Room), `:core:datastore`, `:core:scoring` (pure Kotlin: strength, streaks, rest days, XP — 100% unit-tested), `:core:scheduling` (alarm computation, pure Kotlin), `:core:ui` (theme, components), `:feature:today`, `:feature:habit`, `:feature:garden`, `:feature:insights`, `:feature:settings`, `:widget`, `:sync` (opt-in), `:health` (Health Connect adapter).
 - **Pattern**: MVVM + unidirectional data flow, ViewModel exposes `StateFlow<UiState>`, repositories over Room DAOs returning `Flow`. Hilt for DI (swap to Koin only if KMP becomes a goal).
 - **Data model** (UUID ids, `updated_at`, soft-delete `deleted_at` on every row, for mergeable sync):
-  - `habit`: id, name, identity_phrase, type (DO_BOOL, DO_NUMERIC, AVOID, REDUCE, ANCHOR), unit, target, ceiling, schedule (serialized rule), min_version, cue_text, coping_plan, anchor_habit_id, color, icon, position, archived_at, created_at, health_rule (json), bundle_text
+  - `habit`: id, name, identity_phrase, type (DO_BOOL, DO_NUMERIC, AVOID, REDUCE, ANCHOR), unit, target, ceiling, schedule (serialized rule), min_version, cue_text, coping_plan, anchor_habit_id, color, icon, position, is_private, alias, archived_at, created_at, health_rule (json), bundle_text
   - `entry`: id, habit_id, date (epoch-day), status (DONE, DONE_MIN, SKIP, MISS, LAPSE), value, note, source (MANUAL, WIDGET, NOTIFICATION, HEALTH), created_at
   - `lapse`: id, habit_id, timestamp, triggers (set), amount, note
   - `reminder`: id, habit_id, time, days_mask, lead_minutes, enabled

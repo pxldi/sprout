@@ -4,6 +4,7 @@
  */
 package dev.sprout.core.model
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonPrimitive
@@ -33,7 +34,7 @@ import java.time.LocalTime
 public object BackupCodec {
 
     public const val FORMAT: String = "sprout-backup"
-    public const val VERSION: Int = 1
+    public const val VERSION: Int = 2
 
     private val json = Json {
         prettyPrint = true
@@ -138,6 +139,9 @@ private data class HabitRecord(
     val colorArgb: Int? = null,
     val icon: String? = null,
     val position: Int = 0,
+    /** Version 2. A version 1 file has neither field, and its habits import as public. */
+    @SerialName("private") val isPrivate: Boolean = false,
+    val alias: String? = null,
     val createdAt: String,
     val updatedAt: String,
     val archivedAt: String? = null,
@@ -202,6 +206,8 @@ private fun Habit.toRecord() = HabitRecord(
     colorArgb = colorArgb,
     icon = icon,
     position = position,
+    isPrivate = isPrivate,
+    alias = alias,
     createdAt = createdAt.toString(),
     updatedAt = updatedAt.toString(),
     archivedAt = archivedAt?.toString(),
@@ -225,6 +231,8 @@ private fun HabitRecord.toDomain() = Habit(
     colorArgb = colorArgb,
     icon = icon,
     position = position,
+    isPrivate = isPrivate,
+    alias = alias,
     createdAt = Instant.parse(createdAt),
     updatedAt = Instant.parse(updatedAt),
     archivedAt = archivedAt?.let(Instant::parse),

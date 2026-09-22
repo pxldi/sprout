@@ -67,7 +67,7 @@ public fun HabitDetailScreen(
         modifier = modifier.fillMaxSize(),
         topBar = {
             DetailTopBar(
-                title = state.detail?.habit?.name.orEmpty(),
+                title = state.detail?.habit?.displayName.orEmpty(),
                 showEdit = state.detail != null,
                 onBack = onBack,
                 onEdit = onEdit,

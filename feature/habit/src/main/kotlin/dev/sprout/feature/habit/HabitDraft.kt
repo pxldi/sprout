@@ -66,6 +66,8 @@ public data class HabitDraft(
     val everyNDays: Int = DEFAULT_EVERY_N,
     val reminderEnabled: Boolean = false,
     val reminderTime: LocalTime = DEFAULT_REMINDER_TIME,
+    val isPrivate: Boolean = false,
+    val alias: String = "",
 
     /**
      * The day an every-N-days schedule counts from.
@@ -161,6 +163,8 @@ public data class HabitDraft(
                 everyNDays = everyN?.n ?: DEFAULT_EVERY_N,
                 reminderEnabled = reminder?.enabled == true,
                 reminderTime = reminder?.time ?: DEFAULT_REMINDER_TIME,
+                isPrivate = habit.isPrivate,
+                alias = habit.alias.orEmpty(),
                 everyNAnchor = everyN?.anchor,
                 weekStart = weekly?.weekStart ?: DayOfWeek.MONDAY,
             )

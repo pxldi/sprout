@@ -32,7 +32,7 @@ import dev.sprout.core.database.entity.ReminderEntity
         LapseEntity::class,
         ReminderEntity::class,
     ],
-    version = 1,
+    version = 2,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)
@@ -50,6 +50,7 @@ internal abstract class SproutDatabase : RoomDatabase() {
         fun build(context: Context): SproutDatabase =
             Room.databaseBuilder(context, SproutDatabase::class.java, NAME)
                 .addCallback(EnforceForeignKeys)
+                .addAllMigrations()
                 .build()
     }
 }

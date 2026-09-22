@@ -36,6 +36,15 @@ class HabitRepositoryTest {
     }
 
     @Test
+    fun `a private habit keeps its flag and alias through the database`() = runTest {
+        val saved = habits.save(habit().copy(isPrivate = true, alias = "Evenings"))
+        val loaded = habits.find(saved.id)
+
+        assertEquals(true, loaded?.isPrivate)
+        assertEquals("Evenings", loaded?.alias)
+    }
+
+    @Test
     fun `a non-trivial schedule survives the encode-decode round trip in a real column`() = runTest {
         val rule = ScheduleRule.SpecificDays(setOf(DayOfWeek.TUESDAY, DayOfWeek.SATURDAY))
         val saved = habits.save(habit(schedule = rule))

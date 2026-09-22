@@ -15,6 +15,7 @@ import java.time.LocalDate
 import java.time.LocalTime
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -149,6 +150,40 @@ class HabitDraftTest {
         assertTrue(draft.isComplete)
         assertFalse(draft.reminderEnabled)
     }
+
+    @Test
+    fun `a private habit reads back with its flag and alias`() {
+        val draft = HabitDraft.of(privateHabit(), reminder = null)
+
+        assertTrue(draft.isPrivate)
+        assertEquals("Evenings", draft.alias)
+    }
+
+    @Test
+    fun `a private habit is saved with its alias trimmed`() {
+        val draft = HabitDraft(name = "Read", cue = "I'm in bed", isPrivate = true, alias = "  Evenings ")
+        assertEquals("Evenings", draft.toNewHabit(Instant.EPOCH, anchor, position = 0).alias)
+    }
+
+    @Test
+    fun `turning private off drops the alias`() {
+        val stored = privateHabit()
+        val saved = HabitDraft.of(stored, reminder = null).copy(isPrivate = false).applyTo(stored, anchor)
+
+        assertFalse(saved.isPrivate)
+        assertNull(saved.alias)
+    }
+
+    private fun privateHabit() = Habit(
+        name = "Read",
+        type = HabitType.DO_BOOL,
+        schedule = ScheduleRule.Daily,
+        cue = "I'm in bed",
+        isPrivate = true,
+        alias = "Evenings",
+        createdAt = Instant.EPOCH,
+        updatedAt = Instant.EPOCH,
+    )
 
     @Test
     fun `a target of twenty goes back in the box as twenty`() {

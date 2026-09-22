@@ -32,6 +32,9 @@ internal fun HabitDraft.applyTo(habit: Habit, today: LocalDate): Habit = habit.c
     // cannot outlive the target it belonged to.
     unit = unit.trimToNull().takeIf { type == HabitType.DO_NUMERIC },
     target = targetValue.takeIf { type == HabitType.DO_NUMERIC },
+    isPrivate = isPrivate,
+    // Cleared with the flag, so a public habit carries no alias that nothing shows.
+    alias = alias.trimToNull().takeIf { isPrivate },
 )
 
 /**

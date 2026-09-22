@@ -49,19 +49,38 @@ public class ReminderNotifier @Inject constructor(
     }
 
     private fun post(habit: Habit) {
+        val prompt = context.getString(R.string.notify_prompt)
         val note = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle(habit.name)
-            .setContentText(habit.minimumVersion ?: context.getString(R.string.notify_prompt))
+            .setContentTitle(habit.outsideName ?: context.getString(R.string.notify_private_title))
+            // A private habit's smallest version can say what the habit is.
+            .setContentText(habit.minimumVersion.takeUnless { habit.isPrivate } ?: prompt)
             .setContentIntent(openApp())
             .setAutoCancel(true)
             .setCategory(NotificationCompat.CATEGORY_REMINDER)
             .addAction(0, context.getString(R.string.notify_done), action(habit.id, ACTION_DONE))
             .addAction(0, context.getString(R.string.notify_skip), action(habit.id, ACTION_SKIP))
             .addAction(0, context.getString(R.string.notify_snooze), action(habit.id, ACTION_SNOOZE))
-            .build()
-        NotificationManagerCompat.from(context).notify(habit.id.hashCode(), note)
+        if (habit.isPrivate) {
+            note.setVisibility(NotificationCompat.VISIBILITY_PRIVATE).setPublicVersion(lockScreenVersion())
+        }
+        NotificationManagerCompat.from(context).notify(habit.id.hashCode(), note.build())
     }
+
+    /**
+     * What a lock screen that hides sensitive content shows for a private habit. It hides the alias too.
+     *
+     * It has no actions, so nobody can log a habit from a notification that does not say which
+     * habit it is for. Android shows it only when the user has turned sensitive content off;
+     * by default the full version shows, which is why that one leaves the name out as well.
+     */
+    private fun lockScreenVersion() = NotificationCompat.Builder(context, CHANNEL_ID)
+        .setSmallIcon(R.drawable.ic_notification)
+        .setContentTitle(context.getString(R.string.notify_private_title))
+        .setContentText(context.getString(R.string.notify_prompt))
+        .setContentIntent(openApp())
+        .setCategory(NotificationCompat.CATEGORY_REMINDER)
+        .build()
 
     /**
      * Tapping the body opens the app directly.

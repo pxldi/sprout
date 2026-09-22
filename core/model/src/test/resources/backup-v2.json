@@ -1,0 +1,152 @@
+{
+    "format": "sprout-backup",
+    "version": 2,
+    "exportedAt": "2026-09-22T06:00:00Z",
+    "habits": [
+        {
+            "id": "5b0e6c1a-0000-4000-8000-000000000001",
+            "name": "Read",
+            "type": "DO_BOOL",
+            "schedule": "days:1,4",
+            "identityPhrase": "I'm a reader",
+            "minimumVersion": "One page",
+            "cue": "I've poured the first coffee",
+            "copingPlan": "I'll read one page before bed",
+            "anchorHabitId": null,
+            "bundleText": null,
+            "unit": "pages",
+            "target": 20.0,
+            "ceiling": null,
+            "colorArgb": -11765187,
+            "icon": "book",
+            "position": 0,
+            "private": false,
+            "alias": null,
+            "createdAt": "2026-09-01T07:00:00Z",
+            "updatedAt": "2026-09-10T18:30:00Z",
+            "archivedAt": null,
+            "deletedAt": null
+        },
+        {
+            "id": "5b0e6c1a-0000-4000-8000-000000000002",
+            "name": "No alcohol",
+            "type": "AVOID",
+            "schedule": "daily",
+            "identityPhrase": null,
+            "minimumVersion": null,
+            "cue": null,
+            "copingPlan": null,
+            "anchorHabitId": null,
+            "bundleText": null,
+            "unit": null,
+            "target": null,
+            "ceiling": null,
+            "colorArgb": null,
+            "icon": null,
+            "position": 1,
+            "private": true,
+            "alias": "Evenings",
+            "createdAt": "2026-09-01T07:00:00Z",
+            "updatedAt": "2026-09-10T18:30:00Z",
+            "archivedAt": "2026-09-10T18:30:00Z",
+            "deletedAt": null
+        },
+        {
+            "id": "5b0e6c1a-0000-4000-8000-000000000003",
+            "name": "Stretch",
+            "type": "DO_BOOL",
+            "schedule": "everyN:3:2026-09-01",
+            "identityPhrase": null,
+            "minimumVersion": null,
+            "cue": null,
+            "copingPlan": null,
+            "anchorHabitId": null,
+            "bundleText": null,
+            "unit": null,
+            "target": null,
+            "ceiling": null,
+            "colorArgb": null,
+            "icon": null,
+            "position": 2,
+            "private": false,
+            "alias": null,
+            "createdAt": "2026-09-01T07:00:00Z",
+            "updatedAt": "2026-09-10T18:30:00Z",
+            "archivedAt": null,
+            "deletedAt": "2026-09-10T18:30:00Z"
+        }
+    ],
+    "entries": [
+        {
+            "id": "e1",
+            "habitId": "5b0e6c1a-0000-4000-8000-000000000001",
+            "date": "2026-09-03",
+            "status": "DONE",
+            "value": 24.0,
+            "note": "Finished the chapter on the train.",
+            "source": "MANUAL",
+            "createdAt": "2026-09-01T07:00:00Z",
+            "updatedAt": "2026-09-01T07:00:00Z",
+            "deletedAt": null
+        },
+        {
+            "id": "e2",
+            "habitId": "5b0e6c1a-0000-4000-8000-000000000001",
+            "date": "2026-09-07",
+            "status": "DONE_MIN",
+            "value": null,
+            "note": null,
+            "source": "NOTIFICATION",
+            "createdAt": "2026-09-10T18:30:00Z",
+            "updatedAt": "2026-09-10T18:30:00Z",
+            "deletedAt": null
+        },
+        {
+            "id": "e3",
+            "habitId": "5b0e6c1a-0000-4000-8000-000000000001",
+            "date": "2026-09-10",
+            "status": "SKIP",
+            "value": null,
+            "note": null,
+            "source": "MANUAL",
+            "createdAt": "2026-09-10T18:30:00Z",
+            "updatedAt": "2026-09-10T18:30:00Z",
+            "deletedAt": "2026-09-10T18:30:00Z"
+        }
+    ],
+    "reminders": [
+        {
+            "id": "r1",
+            "habitId": "5b0e6c1a-0000-4000-8000-000000000001",
+            "time": "07:30",
+            "days": [
+                1,
+                2,
+                3,
+                4,
+                5
+            ],
+            "leadMinutes": 30,
+            "enabled": false,
+            "createdAt": "2026-09-01T07:00:00Z",
+            "updatedAt": "2026-09-10T18:30:00Z",
+            "deletedAt": null
+        }
+    ],
+    "lapses": [
+        {
+            "id": "l1",
+            "habitId": "5b0e6c1a-0000-4000-8000-000000000002",
+            "at": "2026-09-05T21:15:00Z",
+            "triggers": [
+                "SOCIAL",
+                "STRESS"
+            ],
+            "amount": null,
+            "note": "Work dinner.",
+            "createdAt": "2026-09-10T18:30:00Z",
+            "updatedAt": "2026-09-10T18:30:00Z",
+            "deletedAt": null
+        }
+    ]
+}
