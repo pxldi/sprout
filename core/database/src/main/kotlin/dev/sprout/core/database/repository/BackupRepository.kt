@@ -14,9 +14,12 @@ import dev.sprout.core.model.Entry
 import dev.sprout.core.model.Habit
 import java.time.Instant
 
-/** What an import changed, counting only rows the user can see. */
-public data class RestoreCounts(val habits: Int, val entries: Int) {
-    public val isEmpty: Boolean get() = habits == 0 && entries == 0
+/**
+ * What an import wrote. [habits] and [entries] count rows the user can see; [rows] counts every
+ * row, tombstones and reminders included, so a file that only deletes something is not "nothing".
+ */
+public data class RestoreCounts(val habits: Int, val entries: Int, val rows: Int) {
+    public val isEmpty: Boolean get() = rows == 0
 }
 
 /**
@@ -56,35 +59,37 @@ public class BackupRepository internal constructor(
         db.withTransaction {
             val habits = restoreHabits(backup.habits)
             val days = restoreEntries(backup.entries)
-            backup.reminders
-                .filter { isNewer(it.updatedAt, dao.reminder(it.id)?.updatedAt) }
-                .forEach { dao.upsertReminder(it.toEntity()) }
-            backup.lapses
-                .filter { isNewer(it.updatedAt, dao.lapse(it.id)?.updatedAt) }
-                .forEach { dao.upsertLapse(it.toEntity()) }
-            RestoreCounts(habits = habits, entries = days)
+            val reminders = backup.reminders.filter { isNewer(it.updatedAt, dao.reminder(it.id)?.updatedAt) }
+            reminders.forEach { dao.upsertReminder(it.toEntity()) }
+            val lapses = backup.lapses.filter { isNewer(it.updatedAt, dao.lapse(it.id)?.updatedAt) }
+            lapses.forEach { dao.upsertLapse(it.toEntity()) }
+            RestoreCounts(
+                habits = habits.count { it.deletedAt == null },
+                entries = days.count { it.deletedAt == null },
+                rows = habits.size + days.size + reminders.size + lapses.size,
+            )
         }
     }
 
-    /** Returns how many live habits were written. */
-    private suspend fun restoreHabits(habits: List<Habit>): Int {
+    /** Returns the habits written. */
+    private suspend fun restoreHabits(habits: List<Habit>): List<Habit> {
         val written = habits.filter { isNewer(it.updatedAt, dao.habit(it.id)?.updatedAt) }
         written.forEach { dao.upsertHabit(it.toEntity()) }
-        return written.count { it.deletedAt == null }
+        return written
     }
 
     /**
      * Matched by day, not by id. A day logged on this phone before the import has its own id,
      * and the unique index allows one row per habit per day, so the newer of the two is written
-     * under the id already here. Returns how many live days were written.
+     * under the id already here. Returns the entries written.
      */
-    private suspend fun restoreEntries(entries: List<Entry>): Int {
-        var written = 0
+    private suspend fun restoreEntries(entries: List<Entry>): List<Entry> {
+        val written = mutableListOf<Entry>()
         for (entry in entries) {
             val here = dao.entryOn(entry.habitId, entry.date)
             if (isNewer(entry.updatedAt, here?.updatedAt)) {
                 dao.upsertEntry(entry.copy(id = here?.id ?: entry.id).toEntity())
-                if (entry.deletedAt == null) written++
+                written += entry
             }
         }
         return written

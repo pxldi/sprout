@@ -37,6 +37,7 @@ public sealed interface SettingsMessage {
     public data class Exported(val habits: Int, val days: Int) : SettingsMessage
     public data object ExportFailed : SettingsMessage
     public data class Imported(val habits: Int, val days: Int) : SettingsMessage
+    public data object ImportedChanges : SettingsMessage
     public data object NothingNew : SettingsMessage
     public data class ImportRefused(val reason: BackupFormatException.Reason) : SettingsMessage
     public data object CopyOn : SettingsMessage
@@ -104,10 +105,11 @@ public class SettingsViewModel @Inject constructor(
         perform {
             try {
                 val counts = backups.importFrom(uri)
-                if (counts.isEmpty) {
-                    SettingsMessage.NothingNew
-                } else {
-                    SettingsMessage.Imported(counts.habits, counts.entries)
+                when {
+                    counts.isEmpty -> SettingsMessage.NothingNew
+                    // Only later edits and deletions of rows already here, or reminders.
+                    counts.habits == 0 && counts.entries == 0 -> SettingsMessage.ImportedChanges
+                    else -> SettingsMessage.Imported(counts.habits, counts.entries)
                 }
             } catch (e: BackupFormatException) {
                 failed(e, SettingsMessage.ImportRefused(e.reason))

@@ -82,7 +82,18 @@ class BackupRepositoryTest {
     @Test
     fun `restore counts only habits and days the user can see`() = runTest {
         val counts = stack().backup.restore(stack().fill())
-        assertEquals(RestoreCounts(habits = 2, entries = 2), counts)
+        assertEquals(2 to 2, counts.habits to counts.entries)
+    }
+
+    @Test
+    fun `a file that only deletes a habit is not reported as nothing new`() = runTest {
+        val phone = stack()
+        val habit = phone.habits.save(habit(name = "Read"))
+        val deleted = habit.copy(updatedAt = TEST_NOW.plusSeconds(60), deletedAt = TEST_NOW.plusSeconds(60))
+
+        val counts = phone.backup.restore(Backup(listOf(deleted), emptyList(), emptyList(), emptyList()))
+
+        assertEquals(RestoreCounts(habits = 0, entries = 0, rows = 1), counts)
     }
 
     @Test

@@ -325,7 +325,9 @@
     <!-- %1$s and %2$s are settings_count_habits and settings_count_days. -->
     <string name="settings_exported">Saved %1$s and %2$s.</string>
     <string name="settings_export_failed">Could not save the file. Try another place.</string>
-    <string name="settings_imported">Added %1$s and %2$s.</string>
+    <!-- Counts new rows and rows the file had a later version of, so "imported", not "added". -->
+    <string name="settings_imported">Imported %1$s and %2$s.</string>
+    <string name="settings_imported_changes">Imported later changes to habits already here.</string>
     <string name="settings_import_nothing_new">Nothing new in this file. Everything in it is already here.</string>
     <string name="settings_import_not_backup">This file is not a Sprout backup. Nothing was imported.</string>
     <string name="settings_import_newer">This backup is from a newer Sprout. Update the app, then import it again.</string>

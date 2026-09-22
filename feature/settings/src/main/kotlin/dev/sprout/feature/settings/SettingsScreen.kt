@@ -190,6 +190,7 @@ private fun Resources.textFor(message: SettingsMessage): String = when (message)
     SettingsMessage.ExportFailed -> getString(R.string.settings_export_failed)
     is SettingsMessage.Imported ->
         getString(R.string.settings_imported, habits(message.habits), days(message.days))
+    SettingsMessage.ImportedChanges -> getString(R.string.settings_imported_changes)
     SettingsMessage.NothingNew -> getString(R.string.settings_import_nothing_new)
     is SettingsMessage.ImportRefused -> getString(
         when (message.reason) {
