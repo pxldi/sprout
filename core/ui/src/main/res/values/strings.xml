@@ -295,4 +295,43 @@
     <string name="milestone_share_failed">Couldn\'t make the image. The milestone still counts.</string>
     <!-- The product name, on the share card. Not translated: it is the name of the thing. -->
     <string name="app_wordmark" translatable="false">Sprout</string>
+
+    <!--
+      Settings, and backup. The database is the only copy of the user's data, so every result
+      says what happened to it, in numbers where there are numbers. An import merges: it never
+      removes anything, and the copy says so, because "import" on its own reads as "replace".
+    -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_backup">Backup</string>
+    <string name="settings_export">Export a backup</string>
+    <string name="settings_export_body">Saves every habit and logged day to one file.</string>
+    <string name="settings_import">Import a backup</string>
+    <string name="settings_import_body">Adds what the file holds. Anything changed here since stays as it is.</string>
+    <string name="settings_daily_copy">Daily copy</string>
+    <string name="settings_daily_copy_off">Off. Choose a folder to keep the last 7 days of copies.</string>
+    <string name="settings_daily_copy_folder">Into %1$s. Keeps the last 7.</string>
+    <string name="settings_daily_copy_last">Last copy %1$s</string>
+    <string name="settings_daily_copy_none">No copy yet</string>
+    <string name="settings_daily_copy_failed">The last copy could not be written. Choose the folder again.</string>
+    <string name="settings_daily_copy_turn_off">Turn off</string>
+    <plurals name="settings_count_habits">
+        <item quantity="one">%1$d habit</item>
+        <item quantity="other">%1$d habits</item>
+    </plurals>
+    <plurals name="settings_count_days">
+        <item quantity="one">%1$d day</item>
+        <item quantity="other">%1$d days</item>
+    </plurals>
+    <!-- %1$s and %2$s are settings_count_habits and settings_count_days. -->
+    <string name="settings_exported">Saved %1$s and %2$s.</string>
+    <string name="settings_export_failed">Could not save the file. Try another place.</string>
+    <!-- Counts new rows and rows the file had a later version of, so "imported", not "added". -->
+    <string name="settings_imported">Imported %1$s and %2$s.</string>
+    <string name="settings_imported_changes">Imported later changes to habits already here.</string>
+    <string name="settings_import_nothing_new">Nothing new in this file. Everything in it is already here.</string>
+    <string name="settings_import_not_backup">This file is not a Sprout backup. Nothing was imported.</string>
+    <string name="settings_import_newer">This backup is from a newer Sprout. Update the app, then import it again.</string>
+    <string name="settings_import_failed">Part of this file could not be read. Nothing was imported.</string>
+    <string name="settings_copy_on">Daily copy is on. Today\'s copy is saved.</string>
+    <string name="settings_copy_failed">Could not write to that folder. Choose another one.</string>
 </resources>

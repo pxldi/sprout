@@ -155,5 +155,8 @@ public class EntryRepository internal constructor(
         }
     }
 
+    /** For the importer, which writes entries in bulk and must not interleave with a log. */
+    internal suspend fun <T> withWriteLock(block: suspend () -> T): T = writes.withLock { block() }
+
     private fun now(): Instant = clock.instant()
 }

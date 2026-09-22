@@ -72,6 +72,7 @@ dependencies {
     implementation(project(":core:ui"))
     implementation(project(":feature:today"))
     implementation(project(":feature:habit"))
+    implementation(project(":feature:settings"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)

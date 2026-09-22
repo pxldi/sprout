@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.EditNote
 import androidx.compose.material.icons.outlined.EventBusy
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -68,6 +69,7 @@ public fun TodayRoute(
     onAddHabit: () -> Unit,
     onOpenHabit: (String) -> Unit,
     onManageHabits: () -> Unit,
+    onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: TodayViewModel = hiltViewModel(),
 ) {
@@ -77,6 +79,7 @@ public fun TodayRoute(
         actions = TodayActions(
             onAddHabit = onAddHabit,
             onManageHabits = onManageHabits,
+            onOpenSettings = onOpenSettings,
             onToggle = viewModel::toggle,
             onSkip = viewModel::skip,
             onMinimum = viewModel::completeMinimum,
@@ -101,7 +104,9 @@ public fun TodayScreen(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        topBar = { TodayTopBar(state, onManageHabits = actions.onManageHabits) },
+        topBar = {
+            TodayTopBar(state, onManageHabits = actions.onManageHabits, onOpenSettings = actions.onOpenSettings)
+        },
         floatingActionButton = {
             // Hidden on first run, which has its own, more explanatory button.
             if (!state.isFirstRun) {
@@ -201,7 +206,7 @@ private fun TodayContent(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun TodayTopBar(state: TodayUiState, onManageHabits: () -> Unit) {
+private fun TodayTopBar(state: TodayUiState, onManageHabits: () -> Unit, onOpenSettings: () -> Unit) {
     TopAppBar(
         title = { Text(stringResource(R.string.today_title)) },
         actions = {
@@ -225,6 +230,13 @@ private fun TodayTopBar(state: TodayUiState, onManageHabits: () -> Unit) {
                         contentDescription = stringResource(R.string.habits_title),
                     )
                 }
+            }
+            // Shown on first run too: after a wipe, import is the first thing somebody needs.
+            IconButton(onClick = onOpenSettings) {
+                Icon(
+                    imageVector = Icons.Outlined.Settings,
+                    contentDescription = stringResource(R.string.settings_title),
+                )
             }
         },
     )

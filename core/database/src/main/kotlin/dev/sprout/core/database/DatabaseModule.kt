@@ -12,6 +12,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import dev.sprout.core.database.repository.BackupRepository
 import dev.sprout.core.database.repository.EntryRepository
 import dev.sprout.core.database.repository.HabitRepository
 import dev.sprout.core.database.repository.LapseRepository
@@ -20,7 +21,7 @@ import java.time.Clock
 import javax.inject.Singleton
 
 /**
- * The module's entire public surface: four repositories over domain types.
+ * The module's entire public surface: the repositories over domain types.
  *
  * Room itself — the database, DAOs and entities — is `internal`. That is not only tidiness:
  * `@Provides` functions must be public, because Kotlin mangles `internal` function names
@@ -33,6 +34,7 @@ public class SproutRepositories internal constructor(
     public val entries: EntryRepository,
     public val lapses: LapseRepository,
     public val reminders: ReminderRepository,
+    public val backup: BackupRepository,
     private val close: () -> Unit = {},
 ) {
     /** Releases the underlying database. Only meaningful for the in-memory test stack. */
@@ -57,12 +59,22 @@ public fun inMemoryRepositories(context: Context, clock: Clock): SproutRepositor
         .setQueryExecutor(Runnable::run)
         .setTransactionExecutor(Runnable::run)
         .build()
+    return repositoriesOver(db, clock, close = db::close)
+}
+
+private fun repositoriesOver(
+    db: SproutDatabase,
+    clock: Clock,
+    close: () -> Unit = {},
+): SproutRepositories {
+    val entries = EntryRepository(db.entryDao(), clock)
     return SproutRepositories(
         habits = HabitRepository(db.habitDao(), clock),
-        entries = EntryRepository(db.entryDao(), clock),
+        entries = entries,
         lapses = LapseRepository(db.lapseDao(), clock),
         reminders = ReminderRepository(db.reminderDao(), clock),
-        close = db::close,
+        backup = BackupRepository(db, db.backupDao(), entries),
+        close = close,
     )
 }
 
@@ -80,18 +92,11 @@ public object DatabaseModule {
     public fun repositories(
         @ApplicationContext context: Context,
         clock: Clock,
-    ): SproutRepositories {
-        val db = SproutDatabase.build(context)
-        return SproutRepositories(
-            habits = HabitRepository(db.habitDao(), clock),
-            entries = EntryRepository(db.entryDao(), clock),
-            lapses = LapseRepository(db.lapseDao(), clock),
-            reminders = ReminderRepository(db.reminderDao(), clock),
-        )
-    }
+    ): SproutRepositories = repositoriesOver(SproutDatabase.build(context), clock)
 
     @Provides public fun habitRepository(all: SproutRepositories): HabitRepository = all.habits
     @Provides public fun entryRepository(all: SproutRepositories): EntryRepository = all.entries
     @Provides public fun lapseRepository(all: SproutRepositories): LapseRepository = all.lapses
     @Provides public fun reminderRepository(all: SproutRepositories): ReminderRepository = all.reminders
+    @Provides public fun backupRepository(all: SproutRepositories): BackupRepository = all.backup
 }

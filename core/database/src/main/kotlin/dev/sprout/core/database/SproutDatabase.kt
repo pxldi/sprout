@@ -10,6 +10,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import androidx.sqlite.db.SupportSQLiteDatabase
+import dev.sprout.core.database.dao.BackupDao
 import dev.sprout.core.database.dao.EntryDao
 import dev.sprout.core.database.dao.HabitDao
 import dev.sprout.core.database.dao.LapseDao
@@ -41,6 +42,7 @@ internal abstract class SproutDatabase : RoomDatabase() {
     abstract fun entryDao(): EntryDao
     abstract fun lapseDao(): LapseDao
     abstract fun reminderDao(): ReminderDao
+    abstract fun backupDao(): BackupDao
 
     companion object {
         const val NAME: String = "sprout.db"
