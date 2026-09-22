@@ -12,7 +12,8 @@ in the app is traceable to published evidence — the research digest lives in
 - **Nothing ever resets to zero.** The headline number is a strength score (exponentially
   smoothed). A miss dents it by a few points; it never wipes.
 - **Streaks with slack.** Rest days are *earned* by showing up, never bought, and spent silently.
-  Out of slack? The run pauses instead of breaking, and showing up within 48 h earns it back.
+  Out of slack? The run pauses instead of breaking, and showing up within 48 h earns it back,
+  once in any seven chances. The strength score still counts the miss.
 - **Kind after a miss.** No guilt notifications, ever. The day after a miss is the most rewarded
   day in the app — the single best intervention of 53 tested in the StepUp megastudy.
 - **Praise, not prizes.** Feedback is specific and drawn from your own data.
