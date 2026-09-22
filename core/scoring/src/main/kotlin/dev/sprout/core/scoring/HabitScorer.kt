@@ -39,6 +39,12 @@ private const val MAX_REST_DAYS = 2
 /** Days after a missed occasion in which showing up still earns the run back. */
 private const val REPAIR_WINDOW_DAYS = 2L
 
+/**
+ * At most one repair in any this-many occasions. Without a limit every miss followed by a
+ * completion was repaired, so a daily habit done every other day kept an unbroken run.
+ */
+private const val OCCASIONS_PER_REPAIR = 7
+
 private const val RATE_WINDOW_DAYS = 30L
 
 /**
@@ -46,8 +52,9 @@ private const val RATE_WINDOW_DAYS = 30L
  *
  * Deliberate properties, each traceable to docs/01-research.md:
  * - strength is an EMA, so a miss dents it and nothing ever resets to zero (Lally 2010);
- * - slack is banked and spent silently, and a broken run is repairable (Sharif & Shu 2017;
- *   Duolingo's freezes and earn-back);
+ * - slack is banked and spent silently, and a broken run is repairable once in a while
+ *   (Sharif & Shu 2017; Duolingo's freezes and earn-back). A repair saves the run only:
+ *   strength and the recent fraction still count the miss;
  * - the day after a miss is singled out, because rewarding the return was the single best
  *   intervention of 53 in the StepUp megastudy (Milkman 2021).
  */
@@ -104,6 +111,12 @@ private class Walk(
     private var bounceBack: LocalDate? = null
     private var runWasAlive = true
 
+    /** Index in [resolved] of the last repair, for the one-in-[OCCASIONS_PER_REPAIR] limit. */
+    private var lastRepairAt: Int? = null
+
+    /** Whether the most recent miss could still be repaired, which is what PAUSED claims. */
+    private var lastMissRepairable = false
+
     fun step(occasion: Occasion) {
         val logged = datesIn(occasion).flatMap { entriesByDate[it].orEmpty() }
         val done = logged.count { it.status.isCompletion }
@@ -124,7 +137,7 @@ private class Walk(
         applyStrength(occasion, outcome, credit)
         applyRun(occasion, outcome, firstCompletion)
 
-        runWasAlive = outcome == OccasionOutcome.COMPLETED || outcome.isNeutral
+        runWasAlive = outcome == OccasionOutcome.COMPLETED || outcome.keepsRun
         // Snapshot after the strength has moved, which is what makes the curve a record.
         resolved += ResolvedOccasion(occasion, outcome, done, credit, firstCompletion, strength)
     }
@@ -137,13 +150,28 @@ private class Walk(
             OccasionOutcome.RESTED
         }
         // A repair rescues a run that was alive. It does not retroactively erase a whole gap.
-        runWasAlive && repairedWithin(occasion) -> OccasionOutcome.REPAIRED
-        else -> OccasionOutcome.MISSED
+        repairAvailable && repairedWithin(occasion) -> {
+            lastRepairAt = resolved.size
+            OccasionOutcome.REPAIRED
+        }
+        else -> {
+            lastMissRepairable = repairAvailable
+            OccasionOutcome.MISSED
+        }
     }
 
-    /** Steps once per required completion, so `3x/week` and `Mon/Wed/Fri` grow at one rate. */
+    /** The run is alive and has not used a repair in the last [OCCASIONS_PER_REPAIR] occasions. */
+    private val repairAvailable: Boolean
+        get() = runWasAlive && lastRepairAt.let { it == null || resolved.size - it >= OCCASIONS_PER_REPAIR }
+
+    /**
+     * Steps once per required completion, so `3x/week` and `Mon/Wed/Fri` grow at one rate.
+     *
+     * A repaired occasion moves strength by its credit like a miss does. Only a skip and a rest
+     * day hold it still.
+     */
     private fun applyStrength(occasion: Occasion, outcome: OccasionOutcome, credit: Double) {
-        if (outcome.isNeutral) return
+        if (outcome.holdsStrength) return
         val retained = alpha.pow(occasion.requiredCompletions)
         strength = strength * retained + credit * MAX_STRENGTH * (1.0 - retained)
     }
@@ -157,8 +185,8 @@ private class Walk(
                 earnRestDays(occasion.requiredCompletions)
             }
             // While a miss is still repairable the run is held, not lost.
-            OccasionOutcome.MISSED -> if (!stillRepairable(occasion)) run = 0
-            else -> Unit // SKIPPED / RESTED / REPAIRED are neutral by design.
+            OccasionOutcome.MISSED -> if (!lastMissRepairable || !stillRepairable(occasion)) run = 0
+            else -> Unit // SKIPPED / RESTED / REPAIRED keep the run as it was.
         }
     }
 
@@ -176,7 +204,7 @@ private class Walk(
         val recent = recentlyJudged()
         val state = when {
             lastClosed == null || lastClosed.outcome != OccasionOutcome.MISSED -> StreakState.ACTIVE
-            stillRepairable(lastClosed.occasion) -> StreakState.PAUSED
+            lastMissRepairable && stillRepairable(lastClosed.occasion) -> StreakState.PAUSED
             else -> StreakState.BROKEN
         }
         return HabitProgress(
@@ -211,14 +239,14 @@ private class Walk(
     /**
      * Occasions in the window that were actually judged — completed or missed.
      *
-     * Skips, rest days and repairs are deliberately excluded. Counting them would drag the
-     * fraction down and so make banked slack visible, which is the one thing it must not be.
+     * Skips and rest days are excluded: counting them would make banked slack visible. A repaired
+     * occasion is included as a miss, since the day itself went undone.
      */
     private fun recentlyJudged(): List<ResolvedOccasion> {
         val windowStart = today.minusDays(RATE_WINDOW_DAYS)
         return resolved.filter {
-            !it.occasion.start.isBefore(windowStart) &&
-                (it.outcome == OccasionOutcome.COMPLETED || it.outcome == OccasionOutcome.MISSED)
+            !it.occasion.start.isBefore(windowStart) && !it.outcome.holdsStrength &&
+                it.outcome != OccasionOutcome.OPEN
         }
     }
 }

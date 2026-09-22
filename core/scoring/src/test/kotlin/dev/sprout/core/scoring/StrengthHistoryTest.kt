@@ -53,8 +53,8 @@ class StrengthHistoryTest {
     fun `the dent lands on the occasion it happened, not on the one after it`() {
         val result = HabitScorer.evaluate(
             ScheduleRule.Daily,
-            // Twenty perfect days, then a gap wide enough that coming back cannot repair it —
-            // a return on day 21 or 22 would make day 20 REPAIRED, and repairs never dent.
+            // Twenty perfect days, then a gap wide enough that coming back cannot repair it:
+            // a return on day 21 or 22 would make day 20 REPAIRED instead of MISSED.
             completions(0, 20) + completions(23, 3),
             today = day(26),
             restDayPolicy = RestDayPolicy.DISABLED,
