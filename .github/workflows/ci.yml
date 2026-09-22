@@ -46,7 +46,7 @@ jobs:
 
   reproducible:
     # Builds twice and diffs, so R8/AGP updates that break reproducibility are caught
-    # before F-Droid catches them. See docs/03-roadmap.md, Risks.
+    # before F-Droid catches them.
     #
     # Two clean R8 release builds are the most expensive thing in this file, and the thing
     # it guards against (a toolchain update) does not change between two commits on the same

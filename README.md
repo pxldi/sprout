@@ -21,8 +21,8 @@ in the app is traceable to published evidence — the research digest lives in
 
 ## Status
 
-Pre-alpha, Phase 0. The scoring engine is implemented and tested; the UI is a placeholder.
-See [docs/03-roadmap.md](docs/03-roadmap.md).
+Pre-alpha. Creating and editing habits, the Today screen, the habit screen (strength curve,
+calendar, runs, notes) and reminders work. Backup, widgets and count habits do not exist yet.
 
 ## Building
 
