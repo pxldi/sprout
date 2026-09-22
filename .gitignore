@@ -20,3 +20,8 @@ keystore.properties
 # Test / tooling output
 /build-reports/
 **/build/reports/
+
+# Claude Code: only the rules are shared. settings.json names paths on this machine.
+/CLAUDE.local.md
+/.claude/*
+!/.claude/rules/

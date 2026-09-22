@@ -2,6 +2,11 @@
 
 *An open-source, local-first Android habit tracker with evidence-based gamification. Kotlin + Jetpack Compose, Material 3, published on F-Droid. Working name only; rename freely.*
 
+> **Status, 2026-09-22.** The design principles, habit types, copy rules, visual identity and
+> architecture below still hold, and code comments cite them. Layers 1 to 3 (companion, XP and
+> quests, people), Hexad onboarding, Health Connect, sync and the `play` flavour are parked. The
+> current plan is kept outside this repository.
+
 ## Positioning in one paragraph
 
 Loop Habit Tracker is the F-Droid standard but is Views-based, releases once every two years, and its maintainer rejects gamification. Habitica has the gamification people love but needs a server and Firebase. Finch proves that a gentle companion with zero punishment retains better than Duolingo. Nobody on F-Droid combines: native Material You, a strength score that never resets, streaks with slack, a companion that never suffers, real support for "don't" habits, Health Connect auto-completion, and server-less sync. That gap is the product.
