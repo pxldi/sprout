@@ -116,6 +116,12 @@
     <string name="create_identity_label">I\'m someone who…</string>
     <string name="create_identity_hint">runs in the morning</string>
     <string name="create_identity_help">How strongly people tie a habit to who they are predicts whether they keep it.</string>
+    <!-- Private habits. The help line says what changes outside the app, and nothing more. -->
+    <string name="create_private_label">Keep private</string>
+    <string name="create_private_help">Reminders leave the name out. Milestones can\'t be shared.</string>
+    <string name="create_alias_label">Shown as</string>
+    <string name="create_alias_hint">Evenings</string>
+    <string name="create_alias_help">Optional. Used in the app and in reminders instead of the name.</string>
 
     <string name="create_smallest_title">What\'s the smallest version that still counts?</string>
     <string name="create_smallest_body">This is what you do on the worst day, instead of nothing. Make it almost too small to fail.</string>
@@ -167,6 +173,8 @@
     <string name="notify_done">Done</string>
     <string name="notify_skip">Skip</string>
     <string name="notify_snooze">Later</string>
+    <!-- Title of a private habit's reminder when it has no alias, and of its lock screen version. -->
+    <string name="notify_private_title">Sprout reminder</string>
 
     <!--
       Permission prompts. Written to say what the user loses, not what the app wants: "Sprout

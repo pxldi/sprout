@@ -56,10 +56,28 @@ public data class Habit(
     val icon: String? = null,
     val position: Int = 0,
 
+    /** Kept off the lock screen, the widget and share cards. See [displayName] and [outsideName]. */
+    val isPrivate: Boolean = false,
+
+    /** What a private habit is called everywhere, the app included. Ignored while not private. */
+    val alias: String? = null,
+
     val createdAt: Instant,
     val updatedAt: Instant,
     val archivedAt: Instant? = null,
     val deletedAt: Instant? = null,
 ) {
     public val isArchived: Boolean get() = archivedAt != null
+
+    /** The name the app shows. Only the edit form shows [name] itself. */
+    public val displayName: String get() = alias?.takeIf { isPrivate } ?: name
+
+    /**
+     * The name for places other people can see, such as a notification or a widget.
+     *
+     * Null for a private habit without an alias; the caller shows a neutral label instead.
+     * The real name is left out even of the unlocked notification, because Android shows a
+     * notification's full content on the lock screen unless the user has changed the default.
+     */
+    public val outsideName: String? get() = if (isPrivate) alias else name
 }

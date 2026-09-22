@@ -196,7 +196,7 @@ private fun TodayContent(
                     )
                     // Under its own habit rather than at the top of the screen: on a day two
                     // habits both hit one, "sixty-six times" has to say which sixty-six.
-                    item.milestone?.let { MilestoneCard(habitName = item.habit.name, milestone = it) }
+                    item.milestone?.let { MilestoneCard(habit = item.habit, milestone = it) }
                     HorizontalDivider()
                 }
             }
@@ -333,7 +333,7 @@ private fun HabitRow(item: TodayItem, onToggle: () -> Unit, onMore: () -> Unit) 
     }
     val ringLabel = context.getString(
         R.string.habit_strength_description,
-        item.habit.name,
+        item.habit.displayName,
         item.progress.strength.roundToInt(),
     )
 
@@ -348,7 +348,7 @@ private fun HabitRow(item: TodayItem, onToggle: () -> Unit, onMore: () -> Unit) 
         },
         headlineContent = {
             Text(
-                text = item.habit.name,
+                text = item.habit.displayName,
                 // Struck through when done: the satisfying part, and the only state change needed.
                 textDecoration = if (item.isDone) TextDecoration.LineThrough else null,
             )
@@ -443,7 +443,7 @@ private data class SheetActions(
 private fun HabitOptions(item: TodayItem, actions: SheetActions) {
     Column(Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
         Text(
-            text = item.habit.name,
+            text = item.habit.displayName,
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
         )

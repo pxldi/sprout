@@ -67,7 +67,7 @@ internal fun DetailHeader(detail: HabitDetail, modifier: Modifier = Modifier) {
             strength = strength,
             label = context.getString(
                 R.string.habit_strength_description,
-                detail.habit.name,
+                detail.habit.displayName,
                 strength.roundToInt(),
             ),
             size = RING_SIZE,
@@ -172,7 +172,7 @@ private fun Quiet(text: String) {
 @Composable
 internal fun PlanCard(habit: Habit, modifier: Modifier = Modifier) {
     val lines = listOfNotNull(
-        habit.cue?.let { stringResource(R.string.detail_plan_cue, it, habit.name) },
+        habit.cue?.let { stringResource(R.string.detail_plan_cue, it, habit.displayName) },
         habit.copingPlan?.let { stringResource(R.string.detail_plan_coping, it) },
         habit.minimumVersion?.let { stringResource(R.string.detail_plan_smallest, it) },
     )

@@ -53,7 +53,7 @@ internal fun NoteDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         // The habit's name: the swipe opens this directly, without the sheet that would say it.
-        title = { Text(item.habit.name) },
+        title = { Text(item.habit.displayName) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 // Notes hang off one day, and which day is not obvious from a dialog.

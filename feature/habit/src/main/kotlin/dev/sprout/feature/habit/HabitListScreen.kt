@@ -115,7 +115,7 @@ private fun SectionHeading(title: String) {
 private fun HabitListRow(summary: HabitSummary, onOpen: () -> Unit) {
     ListItem(
         modifier = Modifier.clickable(onClick = onOpen),
-        headlineContent = { Text(summary.habit.name) },
+        headlineContent = { Text(summary.habit.displayName) },
         supportingContent = {
             Text(
                 text = buildString {

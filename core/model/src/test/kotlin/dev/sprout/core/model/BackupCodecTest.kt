@@ -11,12 +11,25 @@ import java.time.LocalTime
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertTrue
 
 class BackupCodecTest {
 
+    /** Version 1 files are only read now, so this fixture is never rewritten. */
     @Test
     fun `the committed version 1 file decodes to the known rows`() {
         assertEquals(sample, BackupCodec.decode(fixture("backup-v1.json")))
+    }
+
+    @Test
+    fun `a version 1 file imports every habit as public with no alias`() {
+        val habits = BackupCodec.decode(fixture("backup-v1.json")).habits
+        assertTrue(habits.none { it.isPrivate || it.alias != null })
+    }
+
+    @Test
+    fun `the committed version 2 file decodes to the known rows`() {
+        assertEquals(privateSample, BackupCodec.decode(fixture("backup-v2.json")))
     }
 
     /**
@@ -25,12 +38,12 @@ class BackupCodecTest {
      */
     @Test
     fun `encoding the known rows gives the committed file byte for byte`() {
-        assertEquals(fixture("backup-v1.json").trimEnd('\n'), BackupCodec.encode(sample, exportedAt))
+        assertEquals(fixture("backup-v2.json").trimEnd('\n'), BackupCodec.encode(privateSample, exportedAt))
     }
 
     @Test
     fun `every row survives a round trip`() {
-        assertEquals(sample, BackupCodec.decode(BackupCodec.encode(sample, exportedAt)))
+        assertEquals(privateSample, BackupCodec.decode(BackupCodec.encode(privateSample, exportedAt)))
     }
 
     @Test
@@ -64,19 +77,19 @@ class BackupCodecTest {
 
     @Test
     fun `a file from a later version is refused, not half imported`() {
-        val later = fixture("backup-v1.json").replace("\"version\": 1", "\"version\": 2")
+        val later = fixture("backup-v2.json").replace("\"version\": 2", "\"version\": 3")
         assertReason(BackupFormatException.Reason.NEWER_VERSION, later)
     }
 
     @Test
     fun `a status this version does not know marks the file as damaged`() {
-        val odd = fixture("backup-v1.json").replace("\"DONE_MIN\"", "\"HALF_DONE\"")
+        val odd = fixture("backup-v2.json").replace("\"DONE_MIN\"", "\"HALF_DONE\"")
         assertReason(BackupFormatException.Reason.DAMAGED, odd)
     }
 
     @Test
     fun `a field this version does not know marks the file as damaged`() {
-        val odd = fixture("backup-v1.json").replace("\"position\": 0,", "\"position\": 0, \"mood\": 3,")
+        val odd = fixture("backup-v2.json").replace("\"position\": 0,", "\"position\": 0, \"mood\": 3,")
         assertReason(BackupFormatException.Reason.DAMAGED, odd)
     }
 
@@ -204,4 +217,9 @@ internal val sample = Backup(
             updatedAt = t1,
         ),
     ),
+)
+
+/** [sample] as a version 2 file sees it: the avoid habit is private and goes by an alias. */
+internal val privateSample: Backup = sample.copy(
+    habits = sample.habits.map { if (it.id == NO_ALCOHOL) it.copy(isPrivate = true, alias = "Evenings") else it },
 )

@@ -41,6 +41,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
+import dev.sprout.core.model.Habit
 import dev.sprout.core.ui.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -57,11 +58,12 @@ import java.io.File
  * stops being true tomorrow. See [Milestone].
  *
  * Only [MilestoneArt] goes into the shared picture; the Share button is outside the recorded layer
- * so it cannot end up in the image of itself.
+ * so it cannot end up in the image of itself. A private habit gets the card without the button,
+ * because a shared picture carries its name out of the app.
  */
 @Composable
 internal fun MilestoneCard(
-    habitName: String,
+    habit: Habit,
     milestone: Milestone,
     modifier: Modifier = Modifier,
 ) {
@@ -77,7 +79,7 @@ internal fun MilestoneCard(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
     ) {
         MilestoneArt(
-            habitName = habitName,
+            habitName = habit.displayName,
             milestone = milestone,
             // Records what it draws on the way past, so sharing is a read of a layer that is
             // already there rather than a second, off-screen rendering that could drift from it.
@@ -86,23 +88,25 @@ internal fun MilestoneCard(
                 drawLayer(layer)
             },
         )
-        TextButton(
-            enabled = !sharing,
-            onClick = {
-                sharing = true
-                scope.launch {
-                    runCatching { share(context, layer.toImageBitmap(), chooserTitle) }
-                        .onFailure { Toast.makeText(context, failed, Toast.LENGTH_SHORT).show() }
-                    sharing = false
-                }
-            },
-            modifier = Modifier.align(Alignment.End).padding(end = 8.dp, bottom = 4.dp),
-        ) {
-            Icon(imageVector = Icons.Outlined.IosShare, contentDescription = null)
-            Text(
-                text = stringResource(R.string.milestone_share),
-                modifier = Modifier.padding(start = 8.dp),
-            )
+        if (!habit.isPrivate) {
+            TextButton(
+                enabled = !sharing,
+                onClick = {
+                    sharing = true
+                    scope.launch {
+                        runCatching { share(context, layer.toImageBitmap(), chooserTitle) }
+                            .onFailure { Toast.makeText(context, failed, Toast.LENGTH_SHORT).show() }
+                        sharing = false
+                    }
+                },
+                modifier = Modifier.align(Alignment.End).padding(end = 8.dp, bottom = 4.dp),
+            ) {
+                Icon(imageVector = Icons.Outlined.IosShare, contentDescription = null)
+                Text(
+                    text = stringResource(R.string.milestone_share),
+                    modifier = Modifier.padding(start = 8.dp),
+                )
+            }
         }
     }
 }

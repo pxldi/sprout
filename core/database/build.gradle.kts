@@ -16,6 +16,13 @@ android {
     testOptions.unitTests.isIncludeAndroidResources = true
 }
 
+// MigrationTestHelper reads the exported schemas as assets.
+androidComponents {
+    onVariants { variant ->
+        variant.hostTests.values.forEach { it.sources.assets?.addStaticSourceDirectory("schemas") }
+    }
+}
+
 kotlin {
     jvmToolchain(libs.versions.javaTarget.get().toInt())
     explicitApi()
