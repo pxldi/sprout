@@ -28,9 +28,9 @@ by hand and tested. `fallbackToDestructiveMigration` is never acceptable.
 - Make reasonable calls, fix what you find. Ask only when a choice changes
   what the product is, or before anything that can lose user data.
 - Match the surrounding code's style. Don't add summary `.md` files.
-- `./gradlew test detekt lint` before calling anything done. CI runs `test`,
-  `detekt` and `assembleFossDebug` but not `lint`, so a green CI does not
-  mean lint passes.
+- `./gradlew test detekt` before calling anything done; CI runs the same plus
+  `assembleFossDebug`. `./gradlew lint` fails today on 6 known errors. Do not
+  add new ones; once they are fixed, lint joins the gate and CI.
 
 ## Commands
 
