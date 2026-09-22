@@ -20,9 +20,9 @@ import kotlin.test.assertTrue
 /**
  * What the creation flow refuses to let through.
  *
- * The cue and the coping plan being *required* is the deliberate friction in this app — see
- * docs/02-app-design.md, "the plan is the product". If these tests ever get relaxed, that is a
- * product decision, not a cleanup.
+ * The cue being *required* is the deliberate friction in this app; see docs/02-app-design.md,
+ * "the plan is the product". The coping plan was required too until the owner made it optional
+ * on 2026-09-22. Relaxing the cue would be another product decision.
  */
 private fun reminderWith(mask: Int) = Reminder(
     habitId = "habit",
@@ -44,19 +44,25 @@ class HabitDraftTest {
     }
 
     @Test
-    fun `the plan is required, and it is the only thing that is`() {
+    fun `the cue is required`() {
         val named = HabitDraft(name = "Morning run")
 
         assertFalse(named.canLeave(CreationStep.CUE))
-        assertFalse(named.canLeave(CreationStep.COPING))
+        assertTrue(named.copy(cue = "it's 7am").canLeave(CreationStep.CUE))
+    }
 
-        // The genuinely optional steps never block, even completely untouched.
+    @Test
+    fun `the optional steps never block, even untouched`() {
+        val named = HabitDraft(name = "Morning run")
+
         assertTrue(named.canLeave(CreationStep.SMALLEST))
+        assertTrue(named.canLeave(CreationStep.COPING))
         assertTrue(named.canLeave(CreationStep.REMINDER))
+    }
 
-        val planned = named.copy(cue = "it's 7am", copingPlan = "after dinner")
-        assertTrue(planned.canLeave(CreationStep.CUE))
-        assertTrue(planned.canLeave(CreationStep.COPING))
+    @Test
+    fun `a habit with a cue and no coping plan is complete`() {
+        assertTrue(HabitDraft(name = "Morning run", cue = "it's 7am").isComplete)
     }
 
     @Test

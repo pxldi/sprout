@@ -22,27 +22,37 @@ public enum class OccasionOutcome {
     /** Missed, but a banked rest day absorbed it. Neutral, and silent by design. */
     RESTED,
 
-    /** Missed, then earned back by showing up within 48 h. Neutral. */
+    /**
+     * Missed, then earned back by showing up within 48 h. The run survives. Strength and the
+     * recent fraction still count the day as missed.
+     */
     REPAIRED,
 
-    /** Missed with no slack left. The only outcome that decays strength. */
+    /** Missed with no slack left, or with the repair already used. Ends the run. */
     MISSED,
 
     /** Not over yet. Never judged, never a miss. */
     OPEN,
     ;
 
-    public val isNeutral: Boolean get() = this == SKIPPED || this == RESTED || this == REPAIRED
+    /** Strength stays where it was. Only a skip and a banked rest day do this. */
+    public val holdsStrength: Boolean get() = this == SKIPPED || this == RESTED
+
+    /** The run neither grows nor ends. */
+    public val keepsRun: Boolean get() = holdsStrength || this == REPAIRED
 }
 
 public enum class StreakState {
     /** Running, or nothing has gone wrong yet. */
     ACTIVE,
 
-    /** A miss is outstanding but still repairable. The run is held, not lost. */
+    /** A miss is outstanding and a repair is still available for it. The run is held, not lost. */
     PAUSED,
 
-    /** The repair window closed. The previous run is kept as `bestRun`, never erased. */
+    /**
+     * No repair is left for the miss: the window closed, or the run already used its repair. The
+     * previous run is kept as `bestRun`, never erased.
+     */
     BROKEN,
 }
 
@@ -87,8 +97,9 @@ public data class HabitProgress(
      * has had 26 chances; "100% of the last 30 days" would claim four days it never lived
      * through, and this app's whole argument is that its numbers mean exactly what they say.
      *
-     * Neutral outcomes are in neither half: a skip was not a chance missed, and a rest day
-     * spent in the background has to stay invisible here or it stops being silent.
+     * Skips and rest days are in neither half: a skip was not a chance missed, and a rest day
+     * spent in the background has to stay invisible here or it stops being silent. A repaired
+     * day is a chance missed. Leaving it out let a habit done every other day read 15 of 16.
      */
     val recentCompletions: Int,
     val recentChances: Int,

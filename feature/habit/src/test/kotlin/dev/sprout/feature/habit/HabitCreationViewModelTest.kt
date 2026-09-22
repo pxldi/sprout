@@ -126,7 +126,7 @@ class HabitCreationViewModelTest {
 
     @Test
     fun `an incomplete draft is never written, however the save is reached`() = runTest {
-        viewModel.edit { it.copy(name = "Morning run") } // no cue, no coping plan
+        viewModel.edit { it.copy(name = "Morning run") } // no cue
         viewModel.save()
 
         assertNull(viewModel.uiState.value.savedHabitId)

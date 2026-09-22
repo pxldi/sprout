@@ -190,12 +190,24 @@ class HabitEditViewModelTest {
         val stored = save(habit())
         val viewModel = editing(stored.id)
 
-        viewModel.edit { it.copy(copingPlan = "  ") }
+        viewModel.edit { it.copy(cue = "  ") }
         assertFalse(viewModel.uiState.value.canSave)
 
         viewModel.save()
         assertFalse(viewModel.uiState.value.finished)
-        assertEquals("I'll do it after dinner", repositories.habits.find(stored.id)?.copingPlan)
+        assertEquals("it's 7am", repositories.habits.find(stored.id)?.cue)
+    }
+
+    @Test
+    fun `clearing the coping plan saves the habit without one`() = runTest {
+        val stored = save(habit())
+        val viewModel = editing(stored.id)
+
+        viewModel.edit { it.copy(copingPlan = "") }
+        viewModel.save()
+
+        assertTrue(viewModel.uiState.value.finished)
+        assertNull(repositories.habits.find(stored.id)?.copingPlan)
     }
 
     @Test

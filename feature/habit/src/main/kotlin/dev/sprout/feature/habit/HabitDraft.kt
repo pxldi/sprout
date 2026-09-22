@@ -16,10 +16,9 @@ import kotlin.math.truncate
 /**
  * The six questions asked when creating a habit, in order.
  *
- * This is a wizard rather than a form on purpose. "The plan is the product": the cue and the
- * coping plan are the intervention, not metadata about it, and a single scrolling form invites
- * people to fill in the name and skip the two fields that carry the effect
- * (docs/02-app-design.md, "Habit creation flow").
+ * This is a wizard rather than a form on purpose. "The plan is the product": the cue is the
+ * intervention, and a single scrolling form invites people to fill in the name and skip the
+ * field that carries the effect (docs/02-app-design.md, "Habit creation flow").
  */
 public enum class CreationStep {
     WHAT,
@@ -105,19 +104,20 @@ public data class HabitDraft(
     /**
      * Whether the user may leave [step].
      *
-     * Only three answers are required, and two of them are the plan. Requiring the cue and the
-     * coping plan is the one place this app is deliberately more demanding than every other
-     * habit tracker: implementation intentions are the strongest single technique in the
-     * literature (d = 0.65), and for exercise the effect only holds when a coping plan comes
-     * with it. A habit with no plan is a wish, and this app declines to store wishes.
+     * The name, the schedule and the cue are required. The cue is the if-half of an
+     * implementation intention, the strongest single technique in the literature (d = 0.65).
      *
-     * The smallest version and the reminder are genuinely optional, so their steps always pass.
+     * The coping plan is optional. Written on day one it is a guess about obstacles the user has
+     * not met yet, and it cost a screen per habit for everyone. It can be added later, once a
+     * miss shows what actually gets in the way.
+     *
+     * The smallest version and the reminder are optional too, so their steps always pass.
      */
     public fun canLeave(step: CreationStep): Boolean = when (step) {
         CreationStep.WHAT -> name.isNotBlank() && typeFieldsValid()
         CreationStep.SMALLEST -> true
         CreationStep.CUE -> cue.isNotBlank()
-        CreationStep.COPING -> copingPlan.isNotBlank()
+        CreationStep.COPING -> true
         CreationStep.SCHEDULE -> hasUsableSchedule
         CreationStep.REMINDER -> true
     }

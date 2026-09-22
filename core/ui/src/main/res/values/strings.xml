@@ -94,8 +94,8 @@
     <string name="note_clear_help">Leave it empty to remove the note.</string>
 
     <!--
-      Habit creation. One question per screen: the cue and the coping plan are the intervention,
-      and on a single scrolling form they are the two fields everybody skips.
+      Habit creation. One question per screen: the cue is the intervention, and on a single
+      scrolling form it is the field everybody skips. The coping plan is optional.
     -->
     <string name="create_title">New habit</string>
     <string name="create_step">Step %1$d of %2$d</string>
@@ -130,7 +130,7 @@
     <string name="create_cue_then">…then: %1$s.</string>
 
     <string name="create_coping_title">And when it goes wrong?</string>
-    <string name="create_coping_body">Everyone misses. Deciding the fallback now is what keeps a missed morning from becoming a missed week.</string>
+    <string name="create_coping_body">Optional. Everyone misses, and a fallback keeps a missed morning from becoming a missed week. Leave it empty if you don\'t know yet; you can add one after a miss shows what gets in the way.</string>
     <string name="create_coping_prefix">If I miss it, then</string>
     <string name="create_coping_hint">I\'ll do it right after dinner</string>
 
