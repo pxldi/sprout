@@ -5,6 +5,7 @@
 package dev.sprout.feature.habit
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -23,6 +24,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -42,6 +44,7 @@ private const val FILL_ALPHA = 0.14f
 private val CURVE_STROKE = 2.5.dp
 private val CELL_GAP = 3.dp
 private val CELL_CORNER = 2.dp
+private val OFF_OUTLINE = 1.dp
 private val CURVE_HEIGHT = 96.dp
 private val BAR_HEIGHT = 64.dp
 
@@ -111,14 +114,19 @@ private fun areaUnder(points: List<Offset>, baseline: Float): Path = polyline(po
 }
 
 /**
- * Thirteen weeks as columns of seven days.
+ * Thirteen weeks as columns of seven days. Tapping a cell hands its day to [onDayClick].
  *
- * Days that were never scheduled are left blank rather than shaded: an empty cell is what "you
- * owed nothing" should look like, and shading them would fill the grid with marks nobody can
- * act on.
+ * Days that owed nothing are drawn as a faint outline rather than shaded. A filled cell would
+ * read as a result, and there is none; a blank one gave the finger nothing to aim at, and every
+ * day can be tapped to set it.
  */
 @Composable
-internal fun HabitHeatmap(days: List<HeatmapDay>, label: String, modifier: Modifier = Modifier) {
+internal fun HabitHeatmap(
+    days: List<HeatmapDay>,
+    label: String,
+    onDayClick: (HeatmapDay) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val palette = heatmapPalette()
     val weeks = ceil(days.size / DAYS_PER_WEEK.toFloat()).toInt().coerceAtLeast(1)
 
@@ -130,26 +138,70 @@ internal fun HabitHeatmap(days: List<HeatmapDay>, label: String, modifier: Modif
             // filled, or a habit four days old would draw two cells the size of a thumbnail and
             // a column of empty canvas the length of the screen under them.
             .aspectRatio(WINDOW_WEEKS.toFloat() / DAYS_PER_WEEK)
+            // Keyed on the days, or the handler keeps the first list it saw and a tap after a
+            // new log opens the sheet with the old status.
+            .pointerInput(days) {
+                detectTapGestures { point ->
+                    val geometry = HeatmapGeometry(size.width.toFloat(), CELL_GAP.toPx(), weeks)
+                    geometry.indexAt(point, days.size)?.let { onDayClick(days[it]) }
+                }
+            }
             .semantics { contentDescription = label },
     ) {
-        val gap = CELL_GAP.toPx()
-        val cell = ((size.width - gap * (WINDOW_WEEKS - 1)) / WINDOW_WEEKS).coerceAtLeast(1f)
+        val geometry = HeatmapGeometry(size.width, CELL_GAP.toPx(), weeks)
         val corner = CornerRadius(CELL_CORNER.toPx())
-        // Pushed right, so today is the last column whether the habit is a year old or a day.
-        val indent = (WINDOW_WEEKS - weeks) * (cell + gap)
+        val line = OFF_OUTLINE.toPx()
         days.forEachIndexed { index, day ->
             val color = palette.getValue(day.mark)
-            if (color == Color.Transparent) return@forEachIndexed
-            drawRoundRect(
-                color = color,
-                topLeft = Offset(
-                    x = indent + (index / DAYS_PER_WEEK) * (cell + gap),
-                    y = (index % DAYS_PER_WEEK) * (cell + gap),
-                ),
-                size = Size(cell, cell),
-                cornerRadius = corner,
-            )
+            if (day.mark == DayMark.OFF) {
+                // Inset by half the line, so the outline sits inside the cell and not over the gap.
+                drawRoundRect(
+                    color = color,
+                    topLeft = geometry.topLeft(index) + Offset(line / 2, line / 2),
+                    size = Size(geometry.cell - line, geometry.cell - line),
+                    cornerRadius = corner,
+                    style = Stroke(width = line),
+                )
+            } else {
+                drawRoundRect(
+                    color = color,
+                    topLeft = geometry.topLeft(index),
+                    size = Size(geometry.cell, geometry.cell),
+                    cornerRadius = corner,
+                )
+            }
         }
+    }
+}
+
+/**
+ * Where each cell of the heatmap sits. The drawing and the tap handler both use it, so a tap
+ * always lands on the day that is drawn under the finger.
+ */
+internal class HeatmapGeometry(width: Float, gap: Float, weeks: Int) {
+    val cell: Float = ((width - gap * (WINDOW_WEEKS - 1)) / WINDOW_WEEKS).coerceAtLeast(1f)
+    private val pitch = cell + gap
+
+    /** Pushed right, so today is the last column whether the habit is a year old or a day. */
+    private val indent = (WINDOW_WEEKS - weeks) * pitch
+
+    fun topLeft(index: Int): Offset = Offset(
+        x = indent + (index / DAYS_PER_WEEK) * pitch,
+        y = (index % DAYS_PER_WEEK) * pitch,
+    )
+
+    /**
+     * The index of the day under [point], or null left of the first week or after the last day.
+     *
+     * A tap on the gap after a cell counts as that cell. A cell is about 20dp across, well under
+     * a fingertip, and a tap that does nothing reads as a broken grid.
+     */
+    fun indexAt(point: Offset, dayCount: Int): Int? {
+        val x = point.x - indent
+        val row = (point.y / pitch).toInt()
+        val index = (x / pitch).toInt() * DAYS_PER_WEEK + row
+        val onGrid = x >= 0f && point.y >= 0f && row < DAYS_PER_WEEK && index < dayCount
+        return index.takeIf { onGrid }
     }
 }
 
@@ -161,11 +213,11 @@ private fun heatmapPalette(): Map<DayMark, Color> {
         DayMark.MISSED to MissNeutral.copy(alpha = MISSED_ALPHA),
         DayMark.SKIPPED to scheme.secondary.copy(alpha = SKIPPED_ALPHA),
         DayMark.OPEN to scheme.primary.copy(alpha = TRACK_ALPHA),
-        DayMark.OFF to Color.Transparent,
+        DayMark.OFF to scheme.outlineVariant,
     )
 }
 
-/** Names the three colours that mean something. The blanks need no key — they mean nothing. */
+/** Names the three colours that mean something. The outlines need no key: they owed nothing. */
 @Composable
 internal fun HeatmapLegend(modifier: Modifier = Modifier) {
     val palette = heatmapPalette()

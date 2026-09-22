@@ -53,6 +53,17 @@ public data class TodayItem(
     public val canNote: Boolean get() = todayStatus != null
 }
 
+/**
+ * A habit that was due yesterday, offered on Today until noon, so a day done but not ticked
+ * before midnight can still be logged.
+ *
+ * [status] is null while yesterday is unlogged. A row set this morning keeps its place with its
+ * new status, so a wrong tap can be undone from the row it was made on.
+ */
+public data class YesterdayItem(val habit: Habit, val date: LocalDate, val status: EntryStatus?) {
+    public val isDone: Boolean get() = status?.isCompletion == true
+}
+
 /** The small set of things Today is allowed to say about a miss. There is no fourth option. */
 public enum class GentleNote {
     /**
@@ -85,6 +96,8 @@ public data class TodayUiState(
      * anyway, and warning about it would be warning about nothing.
      */
     val hasReminders: Boolean = false,
+    /** Empty from noon on. Not counted in [doneCount], which is about today. */
+    val yesterday: List<YesterdayItem> = emptyList(),
     val isLoading: Boolean = true,
 ) {
     public val doneCount: Int get() = items.count { it.isDone }
@@ -120,4 +133,6 @@ public data class TodayActions(
     val onOpen: (String) -> Unit = {},
     /** Writes, rewrites or clears today's note. Blank text removes it. */
     val onNote: (String, String) -> Unit = { _, _ -> },
+    /** Sets a day other than today, such as yesterday. A null status clears it. */
+    val onSetDay: (String, LocalDate, EntryStatus?) -> Unit = { _, _, _ -> },
 )

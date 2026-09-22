@@ -43,6 +43,22 @@
     <string name="action_close">Close</string>
 
     <!--
+      Setting a past day, from the calendar or from Yesterday on Today. The status line says what
+      the day holds now; an unlogged day gets no line, because there is nothing to report.
+    -->
+    <string name="day_status_done">Done</string>
+    <string name="day_status_minimum">Done, smallest version</string>
+    <string name="day_status_skipped">Skipped</string>
+    <string name="day_status_lapse">Slip logged</string>
+    <string name="day_mark_skipped">Mark skipped</string>
+    <string name="day_clear">Clear this day</string>
+    <!-- Heading for habits due yesterday, shown on Today until noon. It names the day, never a miss. -->
+    <string name="today_yesterday">Yesterday</string>
+    <!-- Title of the options sheet for one of yesterday's habits. %1$s is the habit. -->
+    <string name="today_yesterday_options">%1$s, yesterday</string>
+    <string name="detail_calendar_hint">Tap a day to change it.</string>
+
+    <!--
       Shine: the one line the app says when a habit is ticked off.
 
       Every line here is generated from numbers the user produced, and each has a test asserting
@@ -236,9 +252,9 @@
         <item quantity="one">Last week</item>
         <item quantity="other">Last %1$d weeks</item>
     </plurals>
-    <string name="detail_empty">Nothing logged yet. The first day you tick it off, this fills in.</string>
+    <string name="detail_empty">Nothing logged yet. The curve starts on the first day you tick it off.</string>
     <!-- Days one to six. States what is coming, and does not imply the habit is behind. -->
-    <string name="detail_early">Off to a start. The curve and calendar fill in over the first week.</string>
+    <string name="detail_early">Off to a start. The curve fills in over the first week.</string>
 
     <string name="detail_runs_current">In a row now</string>
     <string name="detail_runs_best">Best run</string>

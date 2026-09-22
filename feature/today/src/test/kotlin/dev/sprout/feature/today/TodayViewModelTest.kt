@@ -25,6 +25,7 @@ import java.time.DayOfWeek
 import java.time.LocalTime
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -401,6 +402,125 @@ class TodayViewModelTest {
             assertFalse(awaitLoaded().hasReminders)
         }
     }
+
+    // Yesterday, until noon. TEST_TODAY is a Monday, so yesterday is a Sunday.
+
+    @Test
+    fun `a habit left unlogged yesterday is offered before noon`() = runTest {
+        stack.addHabit(name = "Run", createdDaysAgo = 7)
+
+        viewModel().uiState.test {
+            val row = awaitLoaded().yesterday.single()
+            assertEquals("Run", row.habit.name)
+            assertEquals(TEST_TODAY.minusDays(1), row.date)
+            assertNull(row.status)
+        }
+    }
+
+    @Test
+    fun `yesterday is not offered from noon on`() = runTest {
+        stack.close()
+        stack = TestStack(time = LocalTime.NOON)
+        stack.addHabit(createdDaysAgo = 7)
+
+        viewModel().uiState.test {
+            assertTrue(awaitLoaded().yesterday.isEmpty())
+        }
+    }
+
+    @Test
+    fun `a habit ticked on time yesterday is not offered again`() = runTest {
+        val habit = stack.addHabit(createdDaysAgo = 7)
+        stack.logOnTheDay(habit.id, daysAgo = 1)
+
+        viewModel().uiState.test {
+            assertTrue(awaitLoaded().yesterday.isEmpty())
+        }
+    }
+
+    @Test
+    fun `a habit created today is not offered for yesterday`() = runTest {
+        stack.addHabit()
+
+        viewModel().uiState.test {
+            assertTrue(awaitLoaded().yesterday.isEmpty())
+        }
+    }
+
+    @Test
+    fun `a habit not due yesterday is not offered`() = runTest {
+        stack.addHabit(
+            schedule = ScheduleRule.SpecificDays(setOf(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY)),
+            createdDaysAgo = 7,
+        )
+
+        viewModel().uiState.test {
+            assertTrue(awaitLoaded().yesterday.isEmpty())
+        }
+    }
+
+    /** A 3x/week habit owes the week. An unticked Sunday is not a day it left open. */
+    @Test
+    fun `a weekly habit is not offered for yesterday`() = runTest {
+        stack.addHabit(schedule = ScheduleRule.TimesPerWeek(times = 3), createdDaysAgo = 7)
+
+        viewModel().uiState.test {
+            assertTrue(awaitLoaded().yesterday.isEmpty())
+        }
+    }
+
+    @Test
+    fun `ticking yesterday logs yesterday and keeps the row so it can be undone`() = runTest {
+        val habit = stack.addHabit(createdDaysAgo = 7)
+        val vm = viewModel()
+
+        vm.uiState.test {
+            awaitLoaded()
+            vm.setDay(habit.id, TEST_TODAY.minusDays(1), EntryStatus.DONE)
+
+            val row = awaitUntil { it.yesterday.single().status != null }.yesterday.single()
+            assertEquals(EntryStatus.DONE, row.status)
+            assertEquals(EntryStatus.DONE, stack.entries.find(habit.id, TEST_TODAY.minusDays(1))?.status)
+            assertNull(stack.entries.find(habit.id, TEST_TODAY), "today is untouched")
+        }
+    }
+
+    @Test
+    fun `unticking yesterday leaves it unlogged`() = runTest {
+        val habit = stack.addHabit(createdDaysAgo = 7)
+        val vm = viewModel()
+
+        vm.setDay(habit.id, TEST_TODAY.minusDays(1), EntryStatus.DONE)
+        vm.setDay(habit.id, TEST_TODAY.minusDays(1), status = null)
+
+        assertNull(stack.entries.find(habit.id, TEST_TODAY.minusDays(1)))
+        vm.uiState.test {
+            assertNull(awaitLoaded().yesterday.single().status)
+        }
+    }
+
+    @Test
+    fun `ticking yesterday takes back today's note about missing it`() = runTest {
+        val habit = stack.addHabit(createdDaysAgo = 7)
+        stack.logOnTheDay(habit.id, daysAgo = 2)
+        val vm = viewModel()
+
+        vm.uiState.test {
+            assertNotNull(awaitLoaded().items.single().gentleNote)
+            vm.setDay(habit.id, TEST_TODAY.minusDays(1), EntryStatus.DONE)
+
+            assertNull(awaitUntil { it.yesterday.single().isDone }.items.single().gentleNote)
+        }
+    }
+
+    @Test
+    fun `today cannot be set as a past day`() = runTest {
+        val habit = stack.addHabit(createdDaysAgo = 7)
+
+        viewModel().setDay(habit.id, TEST_TODAY, EntryStatus.SKIP)
+
+        assertNull(stack.entries.find(habit.id, TEST_TODAY))
+    }
 }
 
 private suspend fun app.cash.turbine.TurbineTestContext<TodayUiState>.awaitLoaded(): TodayUiState {
@@ -412,9 +532,13 @@ private suspend fun app.cash.turbine.TurbineTestContext<TodayUiState>.awaitLoade
 /** Waits for the write that is already in flight to land, rather than guessing at emissions. */
 private suspend fun app.cash.turbine.TurbineTestContext<TodayUiState>.awaitUntilItem(
     predicate: (TodayUiState) -> Boolean,
-): TodayItem {
+): TodayItem = awaitUntil(predicate).items.single()
+
+private suspend fun app.cash.turbine.TurbineTestContext<TodayUiState>.awaitUntil(
+    predicate: (TodayUiState) -> Boolean,
+): TodayUiState {
     var state = awaitLoaded()
     while (!predicate(state)) state = awaitItem()
-    return state.items.single()
+    return state
 }
 

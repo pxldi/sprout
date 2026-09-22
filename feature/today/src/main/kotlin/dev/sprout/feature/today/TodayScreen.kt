@@ -86,6 +86,7 @@ public fun TodayRoute(
             onClear = viewModel::clear,
             onOpen = onOpenHabit,
             onNote = viewModel::note,
+            onSetDay = viewModel::setDay,
         ),
         modifier = modifier,
     )
@@ -101,6 +102,7 @@ public fun TodayScreen(
 ) {
     var sheetFor by remember { mutableStateOf<TodayItem?>(null) }
     var noteFor by remember { mutableStateOf<TodayItem?>(null) }
+    var yesterdaySheetFor by remember { mutableStateOf<YesterdayItem?>(null) }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -123,10 +125,17 @@ public fun TodayScreen(
             state = state,
             actions = actions,
             permissions = permissions,
-            onNote = { noteFor = it },
-            onMore = { sheetFor = it },
+            open = Openers(
+                note = { noteFor = it },
+                more = { sheetFor = it },
+                yesterdayMore = { yesterdaySheetFor = it },
+            ),
             modifier = Modifier.padding(inner),
         )
+    }
+
+    yesterdaySheetFor?.let { item ->
+        YesterdaySheet(item, onSetDay = actions.onSetDay, onDismiss = { yesterdaySheetFor = null })
     }
 
     sheetFor?.let { item ->
@@ -156,19 +165,29 @@ public fun TodayScreen(
 }
 
 /**
+ * What a row can open over the screen.
+ *
+ * Each hands back a whole item rather than an id, because each opens something *about* that
+ * item and the caller would only have to look it up again.
+ */
+private data class Openers(
+    val note: (TodayItem) -> Unit,
+    val more: (TodayItem) -> Unit,
+    val yesterdayMore: (YesterdayItem) -> Unit,
+)
+
+/**
  * Everything under the app bar.
  *
- * Split out from [TodayScreen] so that screen reads as what it is: a Scaffold, a sheet and a
- * dialog. The two `on…` callbacks hand a whole item back rather than an id, because both of them
- * open something *about* that item and the caller would only have to look it up again.
+ * Split out from [TodayScreen] so that screen reads as what it is: a Scaffold, the sheets and a
+ * dialog.
  */
 @Composable
 private fun TodayContent(
     state: TodayUiState,
     actions: TodayActions,
     permissions: ReminderPermissions,
-    onNote: (TodayItem) -> Unit,
-    onMore: (TodayItem) -> Unit,
+    open: Openers,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
@@ -182,23 +201,29 @@ private fun TodayContent(
         }
         if (state.isFirstRun) {
             FirstRunToday(onAddHabit = actions.onAddHabit)
-        } else if (state.nothingScheduled) {
+        } else if (state.nothingScheduled && state.yesterday.isEmpty()) {
             NothingDueToday()
         } else {
             LazyColumn(modifier = Modifier.fillMaxSize()) {
+                if (state.nothingScheduled) item(key = "nothing-due") { NothingDueToday() }
                 items(state.items, key = { it.habit.id }) { item ->
                     SwipeableHabitRow(
                         item = item,
                         onToggle = { actions.onToggle(item.habit.id) },
                         onSkip = { actions.onSkip(item.habit.id) },
-                        onNote = { onNote(item) },
-                        onMore = { onMore(item) },
+                        onNote = { open.note(item) },
+                        onMore = { open.more(item) },
                     )
                     // Under its own habit rather than at the top of the screen: on a day two
                     // habits both hit one, "sixty-six times" has to say which sixty-six.
                     item.milestone?.let { MilestoneCard(habit = item.habit, milestone = it) }
                     HorizontalDivider()
                 }
+                yesterdaySection(
+                    items = state.yesterday,
+                    onSet = { item, status -> actions.onSetDay(item.habit.id, item.date, status) },
+                    onMore = open.yesterdayMore,
+                )
             }
         }
     }

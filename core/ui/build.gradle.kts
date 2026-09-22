@@ -13,6 +13,8 @@ android {
 kotlin { jvmToolchain(libs.versions.javaTarget.get().toInt()) }
 
 dependencies {
+    // DayOptions takes an EntryStatus. The model module is plain Kotlin, so this adds no Android code.
+    implementation(project(":core:model"))
     api(platform(libs.compose.bom))
     api(libs.compose.ui)
     api(libs.compose.ui.graphics)

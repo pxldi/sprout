@@ -51,7 +51,8 @@ public enum class DayMark {
     OFF,
 }
 
-public data class HeatmapDay(val date: LocalDate, val mark: DayMark)
+/** [status] is what was logged, null for an unlogged day; the day sheet shows it and offers Clear. */
+public data class HeatmapDay(val date: LocalDate, val mark: DayMark, val status: EntryStatus? = null)
 
 public data class StrengthPoint(val date: LocalDate, val strength: Double)
 
@@ -178,7 +179,7 @@ private fun heatmap(
     }
     return generateSequence(start) { it.plusDays(1) }
         .takeWhile { !it.isAfter(today) }
-        .map { HeatmapDay(it, markFor(it, entriesByDate[it], progress)) }
+        .map { HeatmapDay(it, markFor(it, entriesByDate[it], progress), entriesByDate[it]?.status) }
         .toList()
 }
 

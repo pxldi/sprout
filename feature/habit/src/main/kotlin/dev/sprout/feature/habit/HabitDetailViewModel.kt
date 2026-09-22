@@ -10,10 +10,12 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.sprout.core.database.repository.EntryRepository
 import dev.sprout.core.database.repository.HabitRepository
+import dev.sprout.core.model.EntryStatus
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import java.time.Clock
 import java.time.LocalDate
 import javax.inject.Inject
@@ -36,7 +38,7 @@ public data class HabitDetailUiState(
 @HiltViewModel
 public class HabitDetailViewModel @Inject constructor(
     habits: HabitRepository,
-    entries: EntryRepository,
+    private val entries: EntryRepository,
     private val clock: Clock,
     savedState: SavedStateHandle,
 ) : ViewModel() {
@@ -67,6 +69,19 @@ public class HabitDetailViewModel @Inject constructor(
         started = SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS),
         initialValue = HabitDetailUiState(),
     )
+
+    /**
+     * Sets a day from the calendar to [status], or clears it when [status] is null.
+     *
+     * A future day is refused. The grid ends at today, and a day that has not happened yet
+     * cannot have been done.
+     */
+    public fun setDay(date: LocalDate, status: EntryStatus?) {
+        if (date.isAfter(LocalDate.now(clock))) return
+        viewModelScope.launch {
+            if (status == null) entries.clear(habitId, date) else entries.log(habitId, date, status)
+        }
+    }
 
     private companion object {
         const val STOP_TIMEOUT_MILLIS = 5_000L
