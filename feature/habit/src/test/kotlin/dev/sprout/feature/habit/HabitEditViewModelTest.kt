@@ -290,13 +290,20 @@ class HabitEditViewModelTest {
         assertFalse(viewModel.uiState.value.isLoading)
     }
 
-    private fun editing(habitId: String) = HabitEditViewModel(
+    /**
+     * An edit screen that has finished loading, as a user would find it.
+     *
+     * Every action is ignored while the screen loads, and loading reads a Room flow that can emit
+     * after the constructor returns. Acting straight away raced that read, and on CI a delete was
+     * dropped and the test hung.
+     */
+    private suspend fun editing(habitId: String): HabitEditViewModel = HabitEditViewModel(
         habits = repositories.habits,
         reminders = repositories.reminders,
         shine = shine,
         clock = clock,
         savedState = SavedStateHandle(mapOf(HABIT_ID_ARG to habitId)),
-    )
+    ).also { viewModel -> viewModel.uiState.first { !it.isLoading } }
 
     private fun habit(
         name: String = "Morning run",
