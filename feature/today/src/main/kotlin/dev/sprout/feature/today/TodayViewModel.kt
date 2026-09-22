@@ -29,7 +29,9 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.Clock
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.LocalTime
+import java.time.ZoneId
 import javax.inject.Inject
 
 @HiltViewModel
@@ -60,7 +62,8 @@ public class TodayViewModel @Inject constructor(
         reminders.observeEnabled(),
         shine.shown,
     ) { activeHabits, entriesByHabit, enabledReminders, shownLines ->
-        val date = today
+        val now = LocalDateTime.now(clock)
+        val date = now.toLocalDate()
         TodayUiState(
             date = date,
             hasAnyHabits = activeHabits.isNotEmpty(),
@@ -78,6 +81,13 @@ public class TodayViewModel @Inject constructor(
                     ).also { remember(it, date) }
                 }
                 .sortedWith(compareBy({ it.reminderAt ?: LocalTime.MAX }, { it.habit.position })),
+            // Until noon: a morning is when last night's forgotten tick is still remembered, and
+            // by the afternoon the list would be about a day nobody is thinking of any more.
+            yesterday = if (now.toLocalTime().isBefore(LocalTime.NOON)) {
+                yesterdayItems(activeHabits, entriesByHabit, date, clock.zone)
+            } else {
+                emptyList()
+            },
             isLoading = false,
         )
     }.stateIn(
@@ -108,6 +118,19 @@ public class TodayViewModel @Inject constructor(
         viewModelScope.launch { entries.toggle(habitId, today) }
     }
 
+    /**
+     * Sets a day before today from its own row, or clears it when [status] is null.
+     *
+     * The row carries its date, so a tap logs the day the user was looking at even if midnight
+     * has passed since the screen was drawn.
+     */
+    public fun setDay(habitId: String, date: LocalDate, status: EntryStatus?) {
+        if (!date.isBefore(today)) return
+        viewModelScope.launch {
+            if (status == null) entries.clear(habitId, date) else entries.log(habitId, date, status)
+        }
+    }
+
     /** Writes down that a line was said, once, so it is not said again for a fortnight. */
     private fun remember(item: TodayItem, date: LocalDate) {
         val line = item.shine ?: return
@@ -132,6 +155,29 @@ public class TodayViewModel @Inject constructor(
     private companion object {
         const val STOP_TIMEOUT_MILLIS = 5_000L
     }
+}
+
+/**
+ * Habits due yesterday that are unlogged, or that were set for yesterday this morning.
+ *
+ * Only habits due on a single day. A 3x/week habit owes the week, not the day, so an unticked
+ * yesterday is not a day it left open. A habit created today did not exist yesterday.
+ */
+private fun yesterdayItems(
+    habits: List<Habit>,
+    entriesByHabit: Map<String, List<Entry>>,
+    today: LocalDate,
+    zone: ZoneId,
+): List<YesterdayItem> {
+    val yesterday = today.minusDays(1)
+    return habits
+        .filter { it.createdAt.atZone(zone).toLocalDate().isBefore(today) }
+        .filter { OccasionCalendar.occasionOn(it.schedule, yesterday)?.isSingleDay == true }
+        .mapNotNull { habit ->
+            val entry = entriesByHabit[habit.id]?.firstOrNull { it.date == yesterday }
+            val setThisMorning = entry != null && entry.updatedAt.atZone(zone).toLocalDate() == today
+            if (entry == null || setThisMorning) YesterdayItem(habit, yesterday, entry?.status) else null
+        }
 }
 
 private fun Habit.isScheduledOn(date: LocalDate): Boolean =

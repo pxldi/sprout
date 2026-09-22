@@ -26,6 +26,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import java.time.Clock
+import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
@@ -124,6 +125,83 @@ class HabitDetailViewModelTest {
             assertEquals(1, detail.days.count { it.mark == DayMark.DONE })
         }
     }
+
+    @Test
+    fun `a missed day set to done from the calendar counts as done`() = runTest {
+        val habit = save(habit())
+        log(habit.id, daysAgo = 3)
+        val viewModel = viewModel(habit.id)
+
+        viewModel.uiState.test {
+            assertEquals(DayMark.MISSED, markOn(awaitLoaded(), daysAgo = 2))
+
+            viewModel.setDay(TODAY.minusDays(2), EntryStatus.DONE)
+
+            assertEquals(DayMark.DONE, markOn(awaitItem(), daysAgo = 2))
+        }
+    }
+
+    @Test
+    fun `clearing a day from the calendar leaves it unlogged`() = runTest {
+        val habit = save(habit())
+        log(habit.id, daysAgo = 3)
+        log(habit.id, daysAgo = 2)
+        val viewModel = viewModel(habit.id)
+
+        viewModel.uiState.test {
+            awaitLoaded()
+
+            viewModel.setDay(TODAY.minusDays(2), status = null)
+
+            val day = assertNotNull(awaitItem().detail).days.single { it.date == TODAY.minusDays(2) }
+            assertEquals(DayMark.MISSED, day.mark)
+            assertNull(day.status)
+        }
+    }
+
+    @Test
+    fun `setting a day from the calendar keeps the note written on it`() = runTest {
+        val habit = save(habit())
+        val day = TODAY.minusDays(2)
+        repositories.entries.log(habit.id, day, EntryStatus.DONE, note = "Rain, went anyway")
+
+        viewModel(habit.id).setDay(day, EntryStatus.DONE_MIN)
+
+        val entry = assertNotNull(repositories.entries.find(habit.id, day))
+        assertEquals(EntryStatus.DONE_MIN, entry.status)
+        assertEquals("Rain, went anyway", entry.note)
+    }
+
+    /** The scorer starts at the first logged day, so filling in an earlier one starts it there. */
+    @Test
+    fun `filling in a day before the first log makes the days between it misses`() = runTest {
+        // Two weeks old, so the day filled in is inside the grid, which starts at creation.
+        val habit = save(habit().copy(createdAt = NOW.minus(Duration.ofDays(14))))
+        log(habit.id, daysAgo = 1)
+        val viewModel = viewModel(habit.id)
+
+        viewModel.uiState.test {
+            assertEquals(DayMark.OFF, markOn(awaitLoaded(), daysAgo = 3))
+
+            viewModel.setDay(TODAY.minusDays(4), EntryStatus.DONE)
+
+            val after = awaitItem()
+            assertEquals(DayMark.DONE, markOn(after, daysAgo = 4))
+            assertEquals(DayMark.MISSED, markOn(after, daysAgo = 3))
+        }
+    }
+
+    @Test
+    fun `a day after today cannot be set`() = runTest {
+        val habit = save(habit())
+
+        viewModel(habit.id).setDay(TODAY.plusDays(1), EntryStatus.DONE)
+
+        assertNull(repositories.entries.find(habit.id, TODAY.plusDays(1)))
+    }
+
+    private fun markOn(state: HabitDetailUiState, daysAgo: Long): DayMark =
+        assertNotNull(state.detail).days.single { it.date == TODAY.minusDays(daysAgo) }.mark
 
     private suspend fun ReceiveTurbine<HabitDetailUiState>.awaitLoaded(): HabitDetailUiState {
         var state = awaitItem()
