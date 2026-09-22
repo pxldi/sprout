@@ -384,10 +384,10 @@ class TodayViewModelTest {
         model.uiState.test {
             awaitUntilItem { it.items.single().shine != null }
         }
-        assertEquals(
-            TEST_TODAY,
-            stack.shine.shown.first()[ShineHistory.keyOf(habit.id, ShineLine.FirstEver.kind)],
-        )
+        // The write runs on DataStore's own dispatcher after the line appears, so wait for it.
+        // Reading the first value raced it and failed on CI.
+        val key = ShineHistory.keyOf(habit.id, ShineLine.FirstEver.kind)
+        assertEquals(TEST_TODAY, stack.shine.shown.first { key in it }[key])
     }
 
     @Test
