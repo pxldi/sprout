@@ -1,3 +1,5 @@
+import java.util.Base64
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -41,8 +43,24 @@ android {
         }
     }
 
+    // Signs release builds only when the keystore is in the environment. F-Droid and CI
+    // build without it and get the unsigned APK they expect.
+    val keystoreB64 = providers.environmentVariable("SPROUT_KEYSTORE_B64").orNull
+    val releaseSigning = keystoreB64?.let { b64 ->
+        val keystore = layout.buildDirectory.file("signing/release.jks").get().asFile
+        keystore.parentFile.mkdirs()
+        keystore.writeBytes(Base64.getMimeDecoder().decode(b64))
+        signingConfigs.create("release") {
+            storeFile = keystore
+            storePassword = providers.environmentVariable("SPROUT_KEYSTORE_PASSWORD").get()
+            keyAlias = providers.environmentVariable("SPROUT_KEY_ALIAS").get()
+            keyPassword = providers.environmentVariable("SPROUT_KEY_PASSWORD").get()
+        }
+    }
+
     buildTypes {
         release {
+            signingConfig = releaseSigning
             // No git metadata in the APK — it varies per checkout and breaks reproducibility.
             vcsInfo { include = false }
             isMinifyEnabled = true
