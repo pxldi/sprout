@@ -34,7 +34,8 @@ import java.time.LocalTime
 public object BackupCodec {
 
     public const val FORMAT: String = "sprout-backup"
-    public const val VERSION: Int = 2
+    /** 3 added the PARTIAL entry status, which a version 2 app would call damaged. */
+    public const val VERSION: Int = 3
 
     private val json = Json {
         prettyPrint = true

@@ -25,7 +25,8 @@ in the app is traceable to published evidence — the research digest lives in
 Pre-alpha. Creating and editing habits, the Today screen, the habit screen (strength curve,
 calendar, runs, notes), reminders and backup work. Settings exports and imports a JSON file and
 can write a daily copy into a folder you pick, keeping 7. An import merges by last change and
-never removes anything. Widgets and count habits do not exist yet.
+never removes anything. Count habits log an amount against a daily target and get partial credit
+for part of it; cut-down habits log an amount against a daily limit. Widgets do not exist yet.
 
 ## Building
 

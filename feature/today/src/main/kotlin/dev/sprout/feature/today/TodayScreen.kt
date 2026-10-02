@@ -55,6 +55,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
 import dev.sprout.core.scoring.plantStage
+import dev.sprout.core.ui.amountLine
 import dev.sprout.core.ui.NotificationAccess
 import dev.sprout.core.ui.R
 import dev.sprout.core.ui.ReminderPermissions
@@ -87,6 +88,8 @@ public fun TodayRoute(
             onOpen = onOpenHabit,
             onNote = viewModel::note,
             onSetDay = viewModel::setDay,
+            onAddOne = viewModel::addOne,
+            onSetAmount = viewModel::setAmount,
         ),
         modifier = modifier,
     )
@@ -103,6 +106,7 @@ public fun TodayScreen(
     var sheetFor by remember { mutableStateOf<TodayItem?>(null) }
     var noteFor by remember { mutableStateOf<TodayItem?>(null) }
     var yesterdaySheetFor by remember { mutableStateOf<YesterdayItem?>(null) }
+    var amountFor by remember { mutableStateOf<AmountRequest?>(null) }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -111,14 +115,7 @@ public fun TodayScreen(
         },
         floatingActionButton = {
             // Hidden on first run, which has its own, more explanatory button.
-            if (!state.isFirstRun) {
-                FloatingActionButton(onClick = actions.onAddHabit) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = stringResource(R.string.today_add_habit),
-                    )
-                }
-            }
+            if (!state.isFirstRun) AddHabitButton(actions.onAddHabit)
         },
     ) { inner ->
         TodayContent(
@@ -129,30 +126,37 @@ public fun TodayScreen(
                 note = { noteFor = it },
                 more = { sheetFor = it },
                 yesterdayMore = { yesterdaySheetFor = it },
+                amount = { amountFor = AmountRequest(it.habit, state.date, it.todayAmount) },
             ),
             modifier = Modifier.padding(inner),
         )
     }
 
     yesterdaySheetFor?.let { item ->
-        YesterdaySheet(item, onSetDay = actions.onSetDay, onDismiss = { yesterdaySheetFor = null })
+        val onAmount = { amountFor = AmountRequest(item.habit, item.date, item.amount) }
+        YesterdaySheet(item, onSetDay = actions.onSetDay, onAmount = onAmount) { yesterdaySheetFor = null }
     }
 
     sheetFor?.let { item ->
-        ModalBottomSheet(onDismissRequest = { sheetFor = null }) {
-            HabitOptions(
-                item = item,
-                actions = SheetActions(
-                    onSkip = { actions.onSkip(item.habit.id); sheetFor = null },
-                    onMinimum = { actions.onMinimum(item.habit.id); sheetFor = null },
-                    onClear = { actions.onClear(item.habit.id); sheetFor = null },
-                    onOpen = { actions.onOpen(item.habit.id); sheetFor = null },
-                    // Closes the sheet on the way: two layers of scrim over one text field is a
-                    // lot of chrome for a sentence.
-                    onNote = { noteFor = item; sheetFor = null },
-                ),
-            )
-        }
+        HabitOptions(
+            item = item,
+            onDismiss = { sheetFor = null },
+            actions = SheetActions(
+                onSkip = { actions.onSkip(item.habit.id); sheetFor = null },
+                onMinimum = { actions.onMinimum(item.habit.id); sheetFor = null },
+                onClear = { actions.onClear(item.habit.id); sheetFor = null },
+                onOpen = { actions.onOpen(item.habit.id); sheetFor = null },
+                // Closes the sheet on the way: two layers of scrim over one text field is a
+                // lot of chrome for a sentence.
+                onNote = { noteFor = item; sheetFor = null },
+                onAmount = { amountFor = AmountRequest(item.habit, state.date, item.todayAmount); sheetFor = null },
+                onNoneToday = { actions.onSetAmount(item.habit.id, state.date, 0.0); sheetFor = null },
+            ),
+        )
+    }
+
+    amountFor?.let { request ->
+        TodayAmountDialog(request, today = state.date, onSetAmount = actions.onSetAmount) { amountFor = null }
     }
 
     noteFor?.let { item ->
@@ -160,6 +164,16 @@ public fun TodayScreen(
             item = item,
             onSave = { text -> actions.onNote(item.habit.id, text); noteFor = null },
             onDismiss = { noteFor = null },
+        )
+    }
+}
+
+@Composable
+private fun AddHabitButton(onAddHabit: () -> Unit) {
+    FloatingActionButton(onClick = onAddHabit) {
+        Icon(
+            imageVector = Icons.Default.Add,
+            contentDescription = stringResource(R.string.today_add_habit),
         )
     }
 }
@@ -174,6 +188,7 @@ private data class Openers(
     val note: (TodayItem) -> Unit,
     val more: (TodayItem) -> Unit,
     val yesterdayMore: (YesterdayItem) -> Unit,
+    val amount: (TodayItem) -> Unit,
 )
 
 /**
@@ -213,6 +228,8 @@ private fun TodayContent(
                         onSkip = { actions.onSkip(item.habit.id) },
                         onNote = { open.note(item) },
                         onMore = { open.more(item) },
+                        onAddOne = { actions.onAddOne(item.habit.id) },
+                        onAmount = { open.amount(item) },
                     )
                     // Under its own habit rather than at the top of the screen: on a day two
                     // habits both hit one, "sixty-six times" has to say which sixty-six.
@@ -280,12 +297,15 @@ private fun TodayTopBar(state: TodayUiState, onManageHabits: () -> Unit, onOpenS
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+@Suppress("LongParameterList")
 private fun SwipeableHabitRow(
     item: TodayItem,
     onToggle: () -> Unit,
     onSkip: () -> Unit,
     onNote: () -> Unit,
     onMore: () -> Unit,
+    onAddOne: () -> Unit,
+    onAmount: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
     val swipeState = rememberSwipeToDismissBoxState()
@@ -306,7 +326,11 @@ private fun SwipeableHabitRow(
             SwipeBackground(direction = swipeState.dismissDirection, hasNote = item.todayNote != null)
         },
     ) {
-        HabitRow(item = item, onToggle = onToggle, onMore = onMore)
+        if (item.habit.isCounted) {
+            CountedHabitRow(item = item, onAddOne = onAddOne, onAmount = onAmount, onMore = onMore)
+        } else {
+            HabitRow(item = item, onToggle = onToggle, onMore = onMore)
+        }
     }
 }
 
@@ -394,8 +418,11 @@ private fun HabitRow(item: TodayItem, onToggle: () -> Unit, onMore: () -> Unit) 
 }
 
 @Composable
-private fun RowSupport(item: TodayItem) {
+internal fun RowSupport(item: TodayItem) {
     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        amountLine(item.habit, item.todayAmount)?.let { line ->
+            Text(text = line, style = MaterialTheme.typography.bodyMedium)
+        }
         val progress = item.progress
         Text(
             text = buildString {
@@ -456,63 +483,69 @@ private fun RowSupport(item: TodayItem) {
  * Grouped rather than passed one by one: they all close the sheet as well as acting, so every
  * one of them is a two-part lambda the sheet itself must not be trusted to remember.
  */
-private data class SheetActions(
+internal data class SheetActions(
     val onSkip: () -> Unit,
     val onMinimum: () -> Unit,
     val onClear: () -> Unit,
     val onOpen: () -> Unit,
     val onNote: () -> Unit,
+    val onAmount: () -> Unit,
+    val onNoneToday: () -> Unit,
 )
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun HabitOptions(item: TodayItem, actions: SheetActions) {
-    Column(Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
-        Text(
-            text = item.habit.displayName,
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
-        )
-        item.habit.minimumVersion?.let { smallest ->
+private fun HabitOptions(item: TodayItem, actions: SheetActions, onDismiss: () -> Unit) {
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
+            Text(
+                text = item.habit.displayName,
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
+            )
+            if (item.habit.isCounted) CountedOptions(item, actions)
+            item.habit.minimumVersion?.let { smallest ->
+                ListItem(
+                    modifier = Modifier.toggleable(value = false, onValueChange = { actions.onMinimum() }),
+                    headlineContent = { Text(stringResource(R.string.action_minimum)) },
+                    supportingContent = { Text(smallest) },
+                )
+            }
             ListItem(
-                modifier = Modifier.toggleable(value = false, onValueChange = { actions.onMinimum() }),
-                headlineContent = { Text(stringResource(R.string.action_minimum)) },
-                supportingContent = { Text(smallest) },
+                modifier = Modifier.toggleable(value = false, onValueChange = { actions.onSkip() }),
+                headlineContent = { Text(stringResource(R.string.action_skip)) },
+            )
+            // Gated exactly like Clear, and for the same reason: both act on today's entry, and
+            // there is no entry to act on until the day is logged.
+            if (item.canNote) {
+                ListItem(
+                    modifier = Modifier.clickable(onClick = actions.onNote),
+                    headlineContent = {
+                        Text(
+                            stringResource(
+                                if (item.todayNote.isNullOrBlank()) {
+                                    R.string.action_note_add
+                                } else {
+                                    R.string.action_note_edit
+                                },
+                            ),
+                        )
+                    },
+                    supportingContent = item.todayNote?.takeIf { it.isNotBlank() }?.let { { Text(it) } },
+                )
+            }
+            if (item.todayStatus != null) {
+                ListItem(
+                    modifier = Modifier.toggleable(value = false, onValueChange = { actions.onClear() }),
+                    headlineContent = { Text(stringResource(R.string.action_clear)) },
+                )
+            }
+            // Last, and separated: everything above logs today, this one leaves Today entirely.
+            HorizontalDivider(Modifier.padding(vertical = 8.dp))
+            ListItem(
+                modifier = Modifier.clickable(onClick = actions.onOpen),
+                headlineContent = { Text(stringResource(R.string.action_open)) },
             )
         }
-        ListItem(
-            modifier = Modifier.toggleable(value = false, onValueChange = { actions.onSkip() }),
-            headlineContent = { Text(stringResource(R.string.action_skip)) },
-        )
-        // Gated exactly like Clear, and for the same reason: both act on today's entry, and
-        // there is no entry to act on until the day is logged.
-        if (item.canNote) {
-            ListItem(
-                modifier = Modifier.clickable(onClick = actions.onNote),
-                headlineContent = {
-                    Text(
-                        stringResource(
-                            if (item.todayNote.isNullOrBlank()) {
-                                R.string.action_note_add
-                            } else {
-                                R.string.action_note_edit
-                            },
-                        ),
-                    )
-                },
-                supportingContent = item.todayNote?.takeIf { it.isNotBlank() }?.let { { Text(it) } },
-            )
-        }
-        if (item.todayStatus != null) {
-            ListItem(
-                modifier = Modifier.toggleable(value = false, onValueChange = { actions.onClear() }),
-                headlineContent = { Text(stringResource(R.string.action_clear)) },
-            )
-        }
-        // Last, and separated: everything above logs today, this one leaves Today entirely.
-        HorizontalDivider(Modifier.padding(vertical = 8.dp))
-        ListItem(
-            modifier = Modifier.clickable(onClick = actions.onOpen),
-            headlineContent = { Text(stringResource(R.string.action_open)) },
-        )
     }
 }

@@ -36,7 +36,10 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.sprout.core.model.EntryStatus
+import dev.sprout.core.model.HabitType
+import dev.sprout.core.ui.AmountDialog
 import dev.sprout.core.ui.DayOptions
+import dev.sprout.core.ui.amountLine
 import dev.sprout.core.ui.R
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -63,6 +66,7 @@ public fun HabitDetailRoute(
         onBack = onBack,
         onEdit = { state.detail?.let { onEdit(it.habit.id) } },
         onSetDay = viewModel::setDay,
+        onSetAmount = viewModel::setAmount,
         modifier = modifier,
     )
 }
@@ -75,10 +79,12 @@ public fun HabitDetailScreen(
     onEdit: () -> Unit,
     onSetDay: (LocalDate, EntryStatus?) -> Unit,
     modifier: Modifier = Modifier,
+    onSetAmount: (LocalDate, Double) -> Unit = { _, _ -> },
 ) {
     // The date rather than the day: the day carries its status, which is stale after the first
     // log, and the sheet should show what the day holds now.
     var sheetFor by remember { mutableStateOf<LocalDate?>(null) }
+    var amountFor by remember { mutableStateOf<LocalDate?>(null) }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -114,8 +120,25 @@ public fun HabitDetailScreen(
                 status = day.status,
                 minimumVersion = detail.habit.minimumVersion,
                 onSet = { status -> onSetDay(day.date, status); sheetFor = null },
+                amount = day.status?.let { amountLine(detail.habit, day.amount) },
+                onAmount = if (detail.habit.isCounted) {
+                    { amountFor = day.date; sheetFor = null }
+                } else {
+                    null
+                },
             )
         }
+    }
+
+    val amountDay = amountFor?.let { date -> detail?.days?.firstOrNull { it.date == date } }
+    if (detail != null && amountDay != null) {
+        AmountDialog(
+            habit = detail.habit,
+            day = amountDay.date.format(fullDate()),
+            initial = amountDay.amount,
+            onSave = { amount -> onSetAmount(amountDay.date, amount); amountFor = null },
+            onDismiss = { amountFor = null },
+        )
     }
 }
 
@@ -175,7 +198,7 @@ private fun DetailBody(detail: HabitDetail, onDayClick: (HeatmapDay) -> Unit) {
 private fun Calendar(detail: HabitDetail, onDayClick: (HeatmapDay) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         HabitHeatmap(days = detail.days, label = calendarLabel(detail), onDayClick = onDayClick)
-        HeatmapLegend()
+        HeatmapLegend(showPartial = detail.habit.type == HabitType.DO_NUMERIC)
         Text(
             text = pluralStringResource(R.plurals.detail_window, detail.weeks, detail.weeks),
             style = MaterialTheme.typography.labelSmall,

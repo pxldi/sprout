@@ -23,6 +23,9 @@ import dev.sprout.core.model.EntryStatus
  * Shared by the calendar on a habit's screen and the Yesterday rows on Today, so a past day
  * offers the same choices wherever it is set. The choice the day already has is left out,
  * because picking it would change nothing. [onSet] gets null for Clear.
+ *
+ * A counted habit passes [onAmount], which adds Enter amount, and [amount], which replaces the
+ * bare status line with "12 of 20 pages".
  */
 @Composable
 public fun DayOptions(
@@ -31,6 +34,8 @@ public fun DayOptions(
     minimumVersion: String?,
     onSet: (EntryStatus?) -> Unit,
     modifier: Modifier = Modifier,
+    amount: String? = null,
+    onAmount: (() -> Unit)? = null,
 ) {
     Column(modifier.fillMaxWidth().padding(bottom = 24.dp)) {
         Text(
@@ -40,12 +45,13 @@ public fun DayOptions(
         )
         status?.let { logged ->
             Text(
-                text = stringResource(logged.labelRes()),
+                text = amount ?: stringResource(logged.labelRes()),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 24.dp),
             )
         }
+        onAmount?.let { Option(stringResource(R.string.action_enter_amount), onClick = it) }
         if (status != EntryStatus.DONE) {
             Option(stringResource(R.string.action_complete)) { onSet(EntryStatus.DONE) }
         }
@@ -73,6 +79,7 @@ private fun Option(label: String, detail: String? = null, onClick: () -> Unit) {
 private fun EntryStatus.labelRes(): Int = when (this) {
     EntryStatus.DONE -> R.string.day_status_done
     EntryStatus.DONE_MIN -> R.string.day_status_minimum
+    EntryStatus.PARTIAL -> R.string.day_status_partial
     EntryStatus.SKIP -> R.string.day_status_skipped
     EntryStatus.LAPSE -> R.string.day_status_lapse
 }

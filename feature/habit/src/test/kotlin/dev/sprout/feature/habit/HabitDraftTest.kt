@@ -73,6 +73,40 @@ class HabitDraftTest {
         assertFalse(counted.copy(target = "nonsense").canLeave(CreationStep.WHAT))
         assertFalse(counted.copy(target = "0").canLeave(CreationStep.WHAT))
         assertTrue(counted.copy(target = "20").canLeave(CreationStep.WHAT))
+        // Typed on a German keyboard.
+        assertEquals(2.5, counted.copy(target = "2,5").targetValue)
+    }
+
+    @Test
+    fun `a cut-down habit needs a limit above zero`() {
+        val reduce = HabitDraft(name = "Coffee", type = HabitType.REDUCE)
+        assertFalse(reduce.canLeave(CreationStep.WHAT))
+        assertFalse(reduce.copy(ceiling = "0").canLeave(CreationStep.WHAT))
+        assertTrue(reduce.copy(ceiling = "2").canLeave(CreationStep.WHAT))
+        // A target typed before switching type does not stand in for the limit.
+        assertFalse(reduce.copy(target = "20").canLeave(CreationStep.WHAT))
+    }
+
+    @Test
+    fun `a cut-down habit is saved with its limit and unit, and no target`() {
+        val draft = HabitDraft(name = "Coffee", type = HabitType.REDUCE, ceiling = "2", unit = " cups ", target = "20")
+        val habit = draft.toNewHabit(Instant.EPOCH, anchor, position = 0)
+
+        assertEquals(2.0, habit.ceiling)
+        assertEquals("cups", habit.unit)
+        assertNull(habit.target)
+        assertEquals("2", HabitDraft.of(habit, reminder = null).ceiling)
+    }
+
+    @Test
+    fun `switching a count habit to do it drops its target and unit`() {
+        val stored = HabitDraft(name = "Read", type = HabitType.DO_NUMERIC, target = "20", unit = "pages")
+            .toNewHabit(Instant.EPOCH, anchor, position = 0)
+        val saved = HabitDraft.of(stored, reminder = null).copy(type = HabitType.DO_BOOL).applyTo(stored, anchor)
+
+        assertNull(saved.target)
+        assertNull(saved.unit)
+        assertNull(saved.ceiling)
     }
 
     @Test

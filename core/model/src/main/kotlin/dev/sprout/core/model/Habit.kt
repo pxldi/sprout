@@ -69,6 +69,54 @@ public data class Habit(
 ) {
     public val isArchived: Boolean get() = archivedAt != null
 
+    /** Logged as an amount: [HabitType.DO_NUMERIC] against [target], [HabitType.REDUCE] against [ceiling]. */
+    public val isCounted: Boolean get() = type == HabitType.DO_NUMERIC || type == HabitType.REDUCE
+
+    /**
+     * What a day with [amount] logged counts as, or null when that amount means nothing logged.
+     *
+     * Decided when the day is logged and stored with it, so lowering a target later does not
+     * rewrite how earlier days went. Zero clears a [HabitType.DO_NUMERIC] day, because nothing
+     * done is the absence of an entry. Zero on a [HabitType.REDUCE] day is the best day there is.
+     */
+    public fun statusFor(amount: Double): EntryStatus? = when (type) {
+        HabitType.DO_NUMERIC -> when {
+            amount <= 0.0 -> null
+            amount >= (target ?: 0.0) -> EntryStatus.DONE
+            else -> EntryStatus.PARTIAL
+        }
+        HabitType.REDUCE -> when {
+            amount < 0.0 -> null
+            amount <= (ceiling ?: Double.MAX_VALUE) -> EntryStatus.DONE
+            else -> EntryStatus.LAPSE
+        }
+        else -> if (amount > 0.0) EntryStatus.DONE else null
+    }
+
+    /**
+     * The amount [entry] stands for, or null when it has none.
+     *
+     * A count day marked done without a number, from a notification or a tick, stands for the
+     * target. Adding one to it must not turn a finished day back into a partial one.
+     */
+    public fun amountOf(entry: Entry): Double? = entry.value
+        ?: target.takeIf { type == HabitType.DO_NUMERIC && entry.status.isCompletion }
+
+    /**
+     * How much of a day an entry is worth to strength, in `0.0..1.0`.
+     *
+     * A completion is worth a whole day and a partial count its share of [target]. Everything
+     * else, a skip and a lapse included, is worth nothing here; a skip is held by the scorer instead.
+     */
+    public fun creditFor(entry: Entry): Double = when {
+        entry.status.isCompletion -> 1.0
+        entry.status == EntryStatus.PARTIAL -> {
+            val goal = target?.takeIf { it > 0.0 }
+            if (goal == null || entry.value == null) 0.0 else (entry.value / goal).coerceIn(0.0, 1.0)
+        }
+        else -> 0.0
+    }
+
     /** The name the app shows. Only the edit form shows [name] itself. */
     public val displayName: String get() = alias?.takeIf { isPrivate } ?: name
 

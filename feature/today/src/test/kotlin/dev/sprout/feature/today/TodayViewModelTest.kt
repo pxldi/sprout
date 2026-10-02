@@ -119,6 +119,37 @@ class TodayViewModelTest {
     }
 
     @Test
+    fun `adding one at a time reaches a count habit's target`() = runTest {
+        val habit = stack.addHabit(name = "Water", type = HabitType.DO_NUMERIC, target = 2.0)
+        val vm = viewModel()
+
+        vm.addOne(habit.id)
+        vm.uiState.test {
+            val partial = awaitUntil { it.items.single().todayAmount == 1.0 }
+            assertFalse(partial.items.single().isDone)
+            assertEquals(EntryStatus.PARTIAL, partial.items.single().todayStatus)
+            assertEquals(0, partial.doneCount)
+        }
+
+        vm.addOne(habit.id)
+        vm.uiState.test {
+            assertTrue(awaitUntilItem { it.items.single().todayAmount == 2.0 }.isDone)
+        }
+    }
+
+    @Test
+    fun `an amount can be set for yesterday and not for tomorrow`() = runTest {
+        val habit = stack.addHabit(name = "Coffee", type = HabitType.REDUCE, ceiling = 2.0, createdDaysAgo = 3)
+        val vm = viewModel()
+
+        vm.setAmount(habit.id, TEST_TODAY.minusDays(1), 0.0)
+        vm.setAmount(habit.id, TEST_TODAY.plusDays(1), 1.0)
+
+        assertEquals(EntryStatus.DONE, stack.entries.find(habit.id, TEST_TODAY.minusDays(1))?.status)
+        assertNull(stack.entries.find(habit.id, TEST_TODAY.plusDays(1)))
+    }
+
+    @Test
     fun `a skipped habit is neither done nor blamed`() = runTest {
         val habit = stack.addHabit()
         val vm = viewModel()
