@@ -6,6 +6,7 @@ package dev.sprout.core.database
 
 import dev.sprout.core.model.EntrySource
 import dev.sprout.core.model.EntryStatus
+import dev.sprout.core.model.HabitType
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -199,5 +200,54 @@ class EntryRepositoryTest {
         entries.note(h.id, TEST_START, "  rained the whole way  ")
 
         assertEquals("rained the whole way", entries.find(h.id, TEST_START)?.note)
+    }
+
+    @Test
+    fun `adding to a count day grows it from partial to done`() = runTest {
+        val h = habits.save(habit(name = "Read", type = HabitType.DO_NUMERIC).copy(target = 2.0))
+
+        entries.addAmount(h, TEST_START, 1.0)
+        assertEquals(EntryStatus.PARTIAL, entries.find(h.id, TEST_START)?.status)
+
+        entries.addAmount(h, TEST_START, 1.0)
+        val done = entries.find(h.id, TEST_START)
+        assertEquals(EntryStatus.DONE, done?.status)
+        assertEquals(2.0, done?.value)
+    }
+
+    @Test
+    fun `adding to a day ticked without a number starts from the target`() = runTest {
+        val h = habits.save(habit(name = "Read", type = HabitType.DO_NUMERIC).copy(target = 20.0))
+        entries.log(h.id, TEST_START, EntryStatus.DONE, source = EntrySource.NOTIFICATION)
+
+        entries.addAmount(h, TEST_START, 1.0)
+
+        assertEquals(21.0, entries.find(h.id, TEST_START)?.value)
+        assertEquals(EntryStatus.DONE, entries.find(h.id, TEST_START)?.status)
+    }
+
+    @Test
+    fun `setting a count day to zero clears it and keeps its note for later`() = runTest {
+        val h = habits.save(habit(name = "Read", type = HabitType.DO_NUMERIC).copy(target = 20.0))
+        entries.setAmount(h, TEST_START, 5.0)
+        entries.note(h.id, TEST_START, "Train was late")
+
+        entries.setAmount(h, TEST_START, 0.0)
+        assertNull(entries.find(h.id, TEST_START))
+
+        entries.setAmount(h, TEST_START, 20.0)
+        assertEquals("Train was late", entries.find(h.id, TEST_START)?.note)
+    }
+
+    @Test
+    fun `a cut-down day over its limit is logged as a slip, and zero as done`() = runTest {
+        val h = habits.save(habit(name = "Coffee", type = HabitType.REDUCE).copy(ceiling = 2.0))
+
+        entries.setAmount(h, TEST_START, 3.0)
+        assertEquals(EntryStatus.LAPSE, entries.find(h.id, TEST_START)?.status)
+
+        entries.setAmount(h, TEST_START, 0.0)
+        assertEquals(EntryStatus.DONE, entries.find(h.id, TEST_START)?.status)
+        assertEquals(0.0, entries.find(h.id, TEST_START)?.value)
     }
 }

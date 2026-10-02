@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import dev.sprout.core.model.EntryStatus
 import dev.sprout.core.ui.DayOptions
 import dev.sprout.core.ui.R
+import dev.sprout.core.ui.amountLine
 import dev.sprout.core.ui.rememberCompletionHaptic
 import java.time.LocalDate
 
@@ -57,12 +58,13 @@ internal fun LazyListScope.yesterdaySection(
     }
 }
 
-/** The smallest version, Skip and Clear for one of yesterday's habits. */
+/** The smallest version, Skip and Clear for one of yesterday's habits, and the amount for a counted one. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun YesterdaySheet(
     item: YesterdayItem,
     onSetDay: (String, LocalDate, EntryStatus?) -> Unit,
+    onAmount: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     ModalBottomSheet(onDismissRequest = onDismiss) {
@@ -71,6 +73,12 @@ internal fun YesterdaySheet(
             status = item.status,
             minimumVersion = item.habit.minimumVersion,
             onSet = { status -> onSetDay(item.habit.id, item.date, status); onDismiss() },
+            amount = item.status?.let { amountLine(item.habit, item.amount) },
+            onAmount = if (item.habit.isCounted) {
+                { onAmount(); onDismiss() }
+            } else {
+                null
+            },
         )
     }
 }
@@ -106,10 +114,12 @@ private fun YesterdayRow(item: YesterdayItem, onToggle: () -> Unit, onMore: () -
                 textDecoration = if (item.isDone) TextDecoration.LineThrough else null,
             )
         },
-        supportingContent = if (item.status == EntryStatus.SKIP) {
-            { Text(stringResource(R.string.day_status_skipped)) }
-        } else {
-            null
+        supportingContent = when {
+            item.status == EntryStatus.SKIP -> {
+                { Text(stringResource(R.string.day_status_skipped)) }
+            }
+            item.status != null && item.habit.isCounted -> amountLine(item.habit, item.amount)?.let { { Text(it) } }
+            else -> null
         },
         trailingContent = {
             Row(verticalAlignment = Alignment.CenterVertically) {

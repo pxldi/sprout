@@ -8,6 +8,7 @@ import dev.sprout.core.model.Habit
 import dev.sprout.core.model.HabitType
 import dev.sprout.core.model.Reminder
 import dev.sprout.core.model.ScheduleRule
+import dev.sprout.core.ui.parseAmount
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
@@ -57,6 +58,7 @@ public data class HabitDraft(
     val identityPhrase: String = "",
     val unit: String = "",
     val target: String = "",
+    val ceiling: String = "",
     val minimumVersion: String = "",
     val cue: String = "",
     val copingPlan: String = "",
@@ -132,11 +134,19 @@ public data class HabitDraft(
      */
     public val isComplete: Boolean get() = CreationStep.entries.all { canLeave(it) }
 
-    /** A measurable habit without a target has nothing to measure against. */
-    private fun typeFieldsValid(): Boolean =
-        type != HabitType.DO_NUMERIC || (target.toDoubleOrNull()?.let { it > 0 } == true)
+    /**
+     * A count habit without a target has nothing to measure against, and a cut-down habit
+     * without a limit has nothing to stay under. A limit of zero is an avoid habit, which has
+     * its own type.
+     */
+    private fun typeFieldsValid(): Boolean = when (type) {
+        HabitType.DO_NUMERIC -> targetValue?.let { it > 0 } == true
+        HabitType.REDUCE -> ceilingValue?.let { it > 0 } == true
+        else -> true
+    }
 
-    public val targetValue: Double? get() = target.toDoubleOrNull()
+    public val targetValue: Double? get() = parseAmount(target)
+    public val ceilingValue: Double? get() = parseAmount(ceiling)
 
     public companion object {
         /**
@@ -154,6 +164,7 @@ public data class HabitDraft(
                 identityPhrase = habit.identityPhrase.orEmpty(),
                 unit = habit.unit.orEmpty(),
                 target = habit.target?.asTargetText().orEmpty(),
+                ceiling = habit.ceiling?.asTargetText().orEmpty(),
                 minimumVersion = habit.minimumVersion.orEmpty(),
                 cue = habit.cue.orEmpty(),
                 copingPlan = habit.copingPlan.orEmpty(),

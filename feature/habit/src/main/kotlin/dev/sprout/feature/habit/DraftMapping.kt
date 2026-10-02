@@ -28,10 +28,11 @@ internal fun HabitDraft.applyTo(habit: Habit, today: LocalDate): Habit = habit.c
     minimumVersion = minimumVersion.trimToNull(),
     cue = cue.trimToNull(),
     copingPlan = copingPlan.trimToNull(),
-    // Cleared when the habit stops being measurable, so a unit left over from an earlier answer
-    // cannot outlive the target it belonged to.
-    unit = unit.trimToNull().takeIf { type == HabitType.DO_NUMERIC },
+    // Cleared when the habit stops being counted, so a unit left over from an earlier answer
+    // cannot outlive the target or limit it belonged to.
+    unit = unit.trimToNull().takeIf { type == HabitType.DO_NUMERIC || type == HabitType.REDUCE },
     target = targetValue.takeIf { type == HabitType.DO_NUMERIC },
+    ceiling = ceilingValue.takeIf { type == HabitType.REDUCE },
     isPrivate = isPrivate,
     // Cleared with the flag, so a public habit carries no alias that nothing shows.
     alias = alias.trimToNull().takeIf { isPrivate },

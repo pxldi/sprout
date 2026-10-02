@@ -4,12 +4,26 @@
  */
 package dev.sprout.core.scoring
 
+import dev.sprout.core.model.Entry
 import dev.sprout.core.model.EntryStatus
+import dev.sprout.core.model.Habit
 import dev.sprout.core.scheduling.Occasion
 import java.time.LocalDate
 
-/** One logged day. The scorer never sees database rows — this module stays pure. */
-public data class DayLog(val date: LocalDate, val status: EntryStatus)
+/**
+ * One logged day. The scorer never sees database rows — this module stays pure.
+ *
+ * [credit] is what the day is worth to strength, in `0.0..1.0`. A count habit's partial day
+ * carries its share of the target; every other day is worth one if it is a completion.
+ */
+public data class DayLog(
+    val date: LocalDate,
+    val status: EntryStatus,
+    val credit: Double = if (status.isCompletion) 1.0 else 0.0,
+)
+
+/** [entry] as the scorer sees it, with this habit's partial credit worked out. */
+public fun Habit.dayLogOf(entry: Entry): DayLog = DayLog(entry.date, entry.status, creditFor(entry))
 
 /** How a scheduled occasion actually resolved, after slack is applied. */
 public enum class OccasionOutcome {
@@ -63,7 +77,7 @@ public data class ResolvedOccasion(
     val occasion: Occasion,
     val outcome: OccasionOutcome,
     val completions: Int,
-    /** Credit toward strength in `0.0..1.0`; partial for an unmet weekly target. */
+    /** Credit toward strength in `0.0..1.0`; partial for an unmet weekly target or a partial count. */
     val credit: Double,
     val firstCompletionDate: LocalDate?,
     /**

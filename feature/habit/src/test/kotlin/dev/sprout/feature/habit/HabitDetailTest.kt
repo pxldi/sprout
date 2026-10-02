@@ -72,6 +72,24 @@ class HabitDetailTest {
     }
 
     @Test
+    fun `part of a count target reads as part done and carries its amount`() {
+        val pages = habit().copy(type = HabitType.DO_NUMERIC, target = 20.0, unit = "pages")
+        val detail = detailFor(
+            pages,
+            entries = listOf(
+                done(TODAY.minusDays(2)),
+                entry(TODAY.minusDays(1), EntryStatus.PARTIAL).copy(value = 12.0),
+            ),
+        )
+
+        val day = detail.days.single { it.date == TODAY.minusDays(1) }
+        assertEquals(DayMark.PARTIAL, day.mark)
+        assertEquals(12.0, day.amount)
+        // A tick without a number stands for the target.
+        assertEquals(20.0, detail.days.single { it.date == TODAY.minusDays(2) }.amount)
+    }
+
+    @Test
     fun `days a habit was never scheduled on are left blank`() {
         val habit = habit(schedule = ScheduleRule.SpecificDays(setOf(DayOfWeek.MONDAY)))
         val detail = detailFor(habit, entries = listOf(done(TODAY.minusDays(1)))) // the Monday

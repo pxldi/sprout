@@ -50,6 +50,9 @@ private val BAR_HEIGHT = 64.dp
 
 /** How present each kind of day looks. A missed day is quiet and grey — never the error colour. */
 private const val MISSED_ALPHA = 0.45f
+
+/** Between today's open cell and a done one, so part of a target reads as part of a done day. */
+private const val PARTIAL_ALPHA = 0.55f
 private const val SKIPPED_ALPHA = 0.40f
 private const val TRACK_ALPHA = 0.18f
 
@@ -210,6 +213,7 @@ private fun heatmapPalette(): Map<DayMark, Color> {
     val scheme = MaterialTheme.colorScheme
     return mapOf(
         DayMark.DONE to scheme.primary,
+        DayMark.PARTIAL to scheme.primary.copy(alpha = PARTIAL_ALPHA),
         DayMark.MISSED to MissNeutral.copy(alpha = MISSED_ALPHA),
         DayMark.SKIPPED to scheme.secondary.copy(alpha = SKIPPED_ALPHA),
         DayMark.OPEN to scheme.primary.copy(alpha = TRACK_ALPHA),
@@ -217,12 +221,18 @@ private fun heatmapPalette(): Map<DayMark, Color> {
     )
 }
 
-/** Names the three colours that mean something. The outlines need no key: they owed nothing. */
+/**
+ * Names the colours that mean something. The outlines need no key: they owed nothing. Part done
+ * is named only for a count habit, the only kind that can have one.
+ */
 @Composable
-internal fun HeatmapLegend(modifier: Modifier = Modifier) {
+internal fun HeatmapLegend(showPartial: Boolean, modifier: Modifier = Modifier) {
     val palette = heatmapPalette()
     Row(modifier = modifier, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
         LegendItem(palette.getValue(DayMark.DONE), stringResource(R.string.detail_legend_done))
+        if (showPartial) {
+            LegendItem(palette.getValue(DayMark.PARTIAL), stringResource(R.string.detail_legend_partial))
+        }
         LegendItem(palette.getValue(DayMark.MISSED), stringResource(R.string.detail_legend_missed))
         LegendItem(
             color = palette.getValue(DayMark.SKIPPED),

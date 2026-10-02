@@ -7,11 +7,11 @@ package dev.sprout.feature.habit
 import dev.sprout.core.model.Entry
 import dev.sprout.core.model.EntryStatus
 import dev.sprout.core.model.Habit
-import dev.sprout.core.scoring.DayLog
 import dev.sprout.core.scoring.HabitProgress
 import dev.sprout.core.scoring.HabitScorer
 import dev.sprout.core.scoring.OccasionOutcome
 import dev.sprout.core.scoring.ResolvedOccasion
+import dev.sprout.core.scoring.dayLogOf
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.temporal.TemporalAdjusters
@@ -38,6 +38,9 @@ public enum class DayMark {
     /** Logged as done, at full size or at the smallest version. The two count the same. */
     DONE,
 
+    /** Some of a count habit's target. Drawn as a lighter done, never as a miss. */
+    PARTIAL,
+
     /** Deliberately skipped. Neutral, and it looks it. */
     SKIPPED,
 
@@ -51,8 +54,16 @@ public enum class DayMark {
     OFF,
 }
 
-/** [status] is what was logged, null for an unlogged day; the day sheet shows it and offers Clear. */
-public data class HeatmapDay(val date: LocalDate, val mark: DayMark, val status: EntryStatus? = null)
+/**
+ * [status] is what was logged, null for an unlogged day; the day sheet shows it and offers Clear.
+ * [amount] is a counted habit's number for the day.
+ */
+public data class HeatmapDay(
+    val date: LocalDate,
+    val mark: DayMark,
+    val status: EntryStatus? = null,
+    val amount: Double? = null,
+)
 
 public data class StrengthPoint(val date: LocalDate, val strength: Double)
 
@@ -121,10 +132,10 @@ internal fun detailOf(
 ): HabitDetail {
     val progress = HabitScorer.evaluate(
         rule = habit.schedule,
-        entries = entries.map { DayLog(it.date, it.status) },
+        entries = entries.map { habit.dayLogOf(it) },
         today = today,
     )
-    val days = heatmap(progress, entries.associateBy { it.date }, today, startedOn)
+    val days = heatmap(habit, progress, entries.associateBy { it.date }, today, startedOn)
     return HabitDetail(
         habit = habit,
         progress = progress,
@@ -158,6 +169,7 @@ private fun curve(occasions: List<ResolvedOccasion>, today: LocalDate): List<Str
 }
 
 private fun heatmap(
+    habit: Habit,
     progress: HabitProgress,
     entriesByDate: Map<LocalDate, Entry>,
     today: LocalDate,
@@ -179,7 +191,10 @@ private fun heatmap(
     }
     return generateSequence(start) { it.plusDays(1) }
         .takeWhile { !it.isAfter(today) }
-        .map { HeatmapDay(it, markFor(it, entriesByDate[it], progress), entriesByDate[it]?.status) }
+        .map { date ->
+            val entry = entriesByDate[date]
+            HeatmapDay(date, markFor(date, entry, progress), entry?.status, entry?.let(habit::amountOf))
+        }
         .toList()
 }
 
@@ -187,6 +202,7 @@ private fun markFor(date: LocalDate, entry: Entry?, progress: HabitProgress): Da
     val resolved = progress.occasions.firstOrNull { date in it.occasion }
     return when {
         entry?.status?.isCompletion == true -> DayMark.DONE
+        entry?.status == EntryStatus.PARTIAL -> DayMark.PARTIAL
         entry?.status == EntryStatus.SKIP -> DayMark.SKIPPED
         // A logged slip is scored as a miss, and it looks like one. Nothing about the drawing
         // says it was worse than forgetting — logging it was the harder thing to do.

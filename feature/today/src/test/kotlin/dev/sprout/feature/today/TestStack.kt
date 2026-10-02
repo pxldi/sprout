@@ -67,6 +67,8 @@ internal class TestStack(time: LocalTime = TEST_TIME) {
         schedule: ScheduleRule = ScheduleRule.Daily,
         position: Int = 0,
         createdDaysAgo: Long = 0,
+        target: Double? = null,
+        ceiling: Double? = null,
     ): Habit = runBlocking {
         val created = TEST_INSTANT.minus(Duration.ofDays(createdDaysAgo))
         habits.save(
@@ -76,6 +78,8 @@ internal class TestStack(time: LocalTime = TEST_TIME) {
                 schedule = schedule,
                 minimumVersion = "Put the shoes on",
                 position = position,
+                target = target,
+                ceiling = ceiling,
                 createdAt = created,
                 updatedAt = created,
             ),

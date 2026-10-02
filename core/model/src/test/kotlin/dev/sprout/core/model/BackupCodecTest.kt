@@ -27,9 +27,15 @@ class BackupCodecTest {
         assertTrue(habits.none { it.isPrivate || it.alias != null })
     }
 
+    /** Version 2 files are only read now, so this fixture is never rewritten. */
     @Test
     fun `the committed version 2 file decodes to the known rows`() {
         assertEquals(privateSample, BackupCodec.decode(fixture("backup-v2.json")))
+    }
+
+    @Test
+    fun `the committed version 3 file decodes to the known rows`() {
+        assertEquals(countSample, BackupCodec.decode(fixture("backup-v3.json")))
     }
 
     /**
@@ -38,12 +44,12 @@ class BackupCodecTest {
      */
     @Test
     fun `encoding the known rows gives the committed file byte for byte`() {
-        assertEquals(fixture("backup-v2.json").trimEnd('\n'), BackupCodec.encode(privateSample, exportedAt))
+        assertEquals(fixture("backup-v3.json").trimEnd('\n'), BackupCodec.encode(countSample, exportedAt))
     }
 
     @Test
     fun `every row survives a round trip`() {
-        assertEquals(privateSample, BackupCodec.decode(BackupCodec.encode(privateSample, exportedAt)))
+        assertEquals(countSample, BackupCodec.decode(BackupCodec.encode(countSample, exportedAt)))
     }
 
     @Test
@@ -77,19 +83,19 @@ class BackupCodecTest {
 
     @Test
     fun `a file from a later version is refused, not half imported`() {
-        val later = fixture("backup-v2.json").replace("\"version\": 2", "\"version\": 3")
+        val later = fixture("backup-v3.json").replace("\"version\": 3", "\"version\": 4")
         assertReason(BackupFormatException.Reason.NEWER_VERSION, later)
     }
 
     @Test
     fun `a status this version does not know marks the file as damaged`() {
-        val odd = fixture("backup-v2.json").replace("\"DONE_MIN\"", "\"HALF_DONE\"")
+        val odd = fixture("backup-v3.json").replace("\"DONE_MIN\"", "\"HALF_DONE\"")
         assertReason(BackupFormatException.Reason.DAMAGED, odd)
     }
 
     @Test
     fun `a field this version does not know marks the file as damaged`() {
-        val odd = fixture("backup-v2.json").replace("\"position\": 0,", "\"position\": 0, \"mood\": 3,")
+        val odd = fixture("backup-v3.json").replace("\"position\": 0,", "\"position\": 0, \"mood\": 3,")
         assertReason(BackupFormatException.Reason.DAMAGED, odd)
     }
 
@@ -222,4 +228,17 @@ internal val sample = Backup(
 /** [sample] as a version 2 file sees it: the avoid habit is private and goes by an alias. */
 internal val privateSample: Backup = sample.copy(
     habits = sample.habits.map { if (it.id == NO_ALCOHOL) it.copy(isPrivate = true, alias = "Evenings") else it },
+)
+
+/** Version 3: a day of a count habit logged short of its target. */
+internal val countSample: Backup = privateSample.copy(
+    entries = privateSample.entries + Entry(
+        id = "e4",
+        habitId = READ,
+        date = LocalDate.of(2026, 9, 14),
+        status = EntryStatus.PARTIAL,
+        value = 12.0,
+        createdAt = t1,
+        updatedAt = t1,
+    ),
 )

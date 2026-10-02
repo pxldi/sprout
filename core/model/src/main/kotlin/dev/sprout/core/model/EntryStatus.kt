@@ -21,6 +21,13 @@ public enum class EntryStatus {
     /** Completed at the habit's "smallest version that still counts". Counts as done. */
     DONE_MIN,
 
+    /**
+     * Some of a count habit's target, but not all of it. Not a completion: the run does not grow
+     * and the 30-day fraction counts the day as undone. Strength gets the share of the target
+     * that was reached, so 10 of 20 pages is worth half a day, never a whole one.
+     */
+    PARTIAL,
+
     /** Deliberately skipped. Holds strength and the run constant. */
     SKIP,
 

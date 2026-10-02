@@ -17,11 +17,11 @@ import dev.sprout.core.model.EntryStatus
 import dev.sprout.core.model.Habit
 import dev.sprout.core.model.Reminder
 import dev.sprout.core.scheduling.OccasionCalendar
-import dev.sprout.core.scoring.DayLog
 import dev.sprout.core.scoring.HabitProgress
 import dev.sprout.core.scoring.HabitScorer
 import dev.sprout.core.scoring.OccasionOutcome
 import dev.sprout.core.scoring.StreakState
+import dev.sprout.core.scoring.dayLogOf
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -34,6 +34,8 @@ import java.time.LocalTime
 import java.time.ZoneId
 import javax.inject.Inject
 
+// One function per thing a row can do. Grouping them would only move the list somewhere else.
+@Suppress("TooManyFunctions")
 @HiltViewModel
 public class TodayViewModel @Inject constructor(
     private val habits: HabitRepository,
@@ -131,6 +133,23 @@ public class TodayViewModel @Inject constructor(
         }
     }
 
+    /** One more glass, page or coffee. Two quick taps add two; see `EntryRepository.addAmount`. */
+    public fun addOne(habitId: String) {
+        viewModelScope.launch {
+            val habit = habits.find(habitId) ?: return@launch
+            entries.addAmount(habit, today, 1.0)
+        }
+    }
+
+    /** Sets a counted habit's amount for today or an earlier day. A future day is refused. */
+    public fun setAmount(habitId: String, date: LocalDate, amount: Double) {
+        if (date.isAfter(today)) return
+        viewModelScope.launch {
+            val habit = habits.find(habitId) ?: return@launch
+            entries.setAmount(habit, date, amount)
+        }
+    }
+
     /** Writes down that a line was said, once, so it is not said again for a fortnight. */
     private fun remember(item: TodayItem, date: LocalDate) {
         val line = item.shine ?: return
@@ -176,7 +195,11 @@ private fun yesterdayItems(
         .mapNotNull { habit ->
             val entry = entriesByHabit[habit.id]?.firstOrNull { it.date == yesterday }
             val setThisMorning = entry != null && entry.updatedAt.atZone(zone).toLocalDate() == today
-            if (entry == null || setThisMorning) YesterdayItem(habit, yesterday, entry?.status) else null
+            if (entry == null || setThisMorning) {
+                YesterdayItem(habit, yesterday, entry?.status, entry?.let(habit::amountOf))
+            } else {
+                null
+            }
         }
 }
 
@@ -191,7 +214,7 @@ private fun Habit.toItem(
 ): TodayItem {
     val progress = HabitScorer.evaluate(
         rule = schedule,
-        entries = entries.map { DayLog(it.date, it.status) },
+        entries = entries.map { dayLogOf(it) },
         today = date,
     )
     val todayEntry = entries.firstOrNull { it.date == date }
@@ -202,6 +225,7 @@ private fun Habit.toItem(
         progress = progress,
         todayStatus = todayEntry?.status,
         todayNote = todayEntry?.note,
+        todayAmount = todayEntry?.let { amountOf(it) },
         reminderAt = reminder,
         gentleNote = note,
         // The one thing here that does not take its turn. A comeback that is also the seventh

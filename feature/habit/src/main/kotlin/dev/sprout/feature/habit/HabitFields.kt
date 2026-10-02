@@ -51,8 +51,8 @@ internal fun NameAndTypeFields(draft: HabitDraft, onEdit: Edit) {
             modifier = Modifier.fillMaxWidth(),
         )
         TypePicker(draft, onEdit)
-        if (draft.type == HabitType.DO_NUMERIC) {
-            NumericFields(draft, onEdit)
+        if (draft.type == HabitType.DO_NUMERIC || draft.type == HabitType.REDUCE) {
+            AmountFields(draft, onEdit)
         }
         OutlinedTextField(
             value = draft.identityPhrase,
@@ -116,6 +116,7 @@ private fun TypePicker(draft: HabitDraft, onEdit: Edit) {
     val types = listOf(
         HabitType.DO_BOOL to R.string.create_type_do,
         HabitType.DO_NUMERIC to R.string.create_type_count,
+        HabitType.REDUCE to R.string.create_type_reduce,
         HabitType.AVOID to R.string.create_type_avoid,
     )
     SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
@@ -129,13 +130,19 @@ private fun TypePicker(draft: HabitDraft, onEdit: Edit) {
     }
 }
 
+/** The number a counted habit is measured against: a target to reach, or a limit to stay under. */
 @Composable
-private fun NumericFields(draft: HabitDraft, onEdit: Edit) {
+private fun AmountFields(draft: HabitDraft, onEdit: Edit) {
+    val isLimit = draft.type == HabitType.REDUCE
     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         OutlinedTextField(
-            value = draft.target,
-            onValueChange = { target -> onEdit { it.copy(target = target) } },
-            label = { Text(stringResource(R.string.create_target_label)) },
+            value = if (isLimit) draft.ceiling else draft.target,
+            onValueChange = { amount ->
+                onEdit { if (isLimit) it.copy(ceiling = amount) else it.copy(target = amount) }
+            },
+            label = {
+                Text(stringResource(if (isLimit) R.string.create_ceiling_label else R.string.create_target_label))
+            },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
             singleLine = true,
             modifier = Modifier.weight(1f),
@@ -144,7 +151,9 @@ private fun NumericFields(draft: HabitDraft, onEdit: Edit) {
             value = draft.unit,
             onValueChange = { unit -> onEdit { it.copy(unit = unit) } },
             label = { Text(stringResource(R.string.create_unit_label)) },
-            placeholder = { Text(stringResource(R.string.create_unit_hint)) },
+            placeholder = {
+                Text(stringResource(if (isLimit) R.string.create_reduce_unit_hint else R.string.create_unit_hint))
+            },
             singleLine = true,
             modifier = Modifier.weight(1f),
         )

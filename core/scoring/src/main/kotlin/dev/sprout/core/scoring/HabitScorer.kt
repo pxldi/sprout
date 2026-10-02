@@ -120,7 +120,9 @@ private class Walk(
     fun step(occasion: Occasion) {
         val logged = datesIn(occasion).flatMap { entriesByDate[it].orEmpty() }
         val done = logged.count { it.status.isCompletion }
-        val credit = (done.toDouble() / occasion.requiredCompletions).coerceIn(0.0, 1.0)
+        // Summed per day rather than counted, so 10 of 20 pages moves strength half as far as 20.
+        // For a habit without amounts the sum is the number of completions, as it always was.
+        val credit = (logged.sumOf { it.credit } / occasion.requiredCompletions).coerceIn(0.0, 1.0)
         val firstCompletion = logged.firstOrNull { it.status.isCompletion }?.date
 
         // An occasion resolves the moment its target is met — waiting for midnight would mean

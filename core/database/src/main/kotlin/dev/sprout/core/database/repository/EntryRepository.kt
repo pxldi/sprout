@@ -10,6 +10,7 @@ import dev.sprout.core.database.entity.toEntity
 import dev.sprout.core.model.Entry
 import dev.sprout.core.model.EntrySource
 import dev.sprout.core.model.EntryStatus
+import dev.sprout.core.model.Habit
 import dev.sprout.core.model.newId
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -31,6 +32,8 @@ import java.time.LocalDate
  * notification action runs in a BroadcastReceiver that has no ViewModel to serialise against —
  * a lock any caller can sidestep is not a lock.
  */
+// Every entry write lives here because the lock does. Splitting the class would split the lock.
+@Suppress("TooManyFunctions")
 public class EntryRepository internal constructor(
     private val dao: EntryDao,
     private val clock: Clock,
@@ -115,8 +118,7 @@ public class EntryRepository internal constructor(
             date = date,
             status = status,
             value = value,
-            // Null means unchanged — see [log]. The same argument applies to `value`, which does
-            // not yet have a caller that would notice.
+            // Null means unchanged — see [log].
             note = note ?: existing?.note,
             source = source,
             createdAt = existing?.createdAt ?: at,
@@ -152,6 +154,46 @@ public class EntryRepository internal constructor(
             } else {
                 writeLog(habitId, date, EntryStatus.DONE, source = source)
             }
+        }
+    }
+
+    /**
+     * Logs [amount] of a counted habit on [date], or clears the day when the amount means
+     * nothing logged. [Habit.statusFor] decides whether the day is done, partial or a slip.
+     */
+    public suspend fun setAmount(
+        habit: Habit,
+        date: LocalDate,
+        amount: Double,
+        source: EntrySource = EntrySource.MANUAL,
+    ) {
+        writes.withLock { writeAmount(habit, date, amount, source) }
+    }
+
+    /**
+     * Adds [delta] to what is logged on [date].
+     *
+     * Read-then-write under the lock, for the same reason as [toggle]: two quick taps must add
+     * two, not write the same total twice.
+     */
+    public suspend fun addAmount(
+        habit: Habit,
+        date: LocalDate,
+        delta: Double,
+        source: EntrySource = EntrySource.MANUAL,
+    ) {
+        writes.withLock {
+            val current = dao.findOn(habit.id, date)?.toDomain()?.let(habit::amountOf) ?: 0.0
+            writeAmount(habit, date, current + delta, source)
+        }
+    }
+
+    private suspend fun writeAmount(habit: Habit, date: LocalDate, amount: Double, source: EntrySource) {
+        val status = habit.statusFor(amount)
+        if (status == null) {
+            dao.softDeleteOn(habit.id, date, now())
+        } else {
+            writeLog(habit.id, date, status, value = amount, source = source)
         }
     }
 

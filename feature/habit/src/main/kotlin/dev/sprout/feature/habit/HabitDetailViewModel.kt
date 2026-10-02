@@ -37,7 +37,7 @@ public data class HabitDetailUiState(
  */
 @HiltViewModel
 public class HabitDetailViewModel @Inject constructor(
-    habits: HabitRepository,
+    private val habits: HabitRepository,
     private val entries: EntryRepository,
     private val clock: Clock,
     savedState: SavedStateHandle,
@@ -80,6 +80,15 @@ public class HabitDetailViewModel @Inject constructor(
         if (date.isAfter(LocalDate.now(clock))) return
         viewModelScope.launch {
             if (status == null) entries.clear(habitId, date) else entries.log(habitId, date, status)
+        }
+    }
+
+    /** Sets a counted habit's amount on a day from the calendar. A future day is refused. */
+    public fun setAmount(date: LocalDate, amount: Double) {
+        if (date.isAfter(LocalDate.now(clock))) return
+        viewModelScope.launch {
+            val habit = habits.find(habitId) ?: return@launch
+            entries.setAmount(habit, date, amount)
         }
     }
 

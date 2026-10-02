@@ -40,6 +40,8 @@ public data class TodayItem(
      * Outranks [shine], which is a sentence about the same completion; see [Milestone].
      */
     val milestone: Milestone? = null,
+    /** How much of a counted habit is logged today. Null for other habits and unlogged days. */
+    val todayAmount: Double? = null,
 ) {
     public val isDone: Boolean get() = todayStatus?.isCompletion == true
     public val isSkipped: Boolean get() = todayStatus == EntryStatus.SKIP
@@ -60,9 +62,18 @@ public data class TodayItem(
  * [status] is null while yesterday is unlogged. A row set this morning keeps its place with its
  * new status, so a wrong tap can be undone from the row it was made on.
  */
-public data class YesterdayItem(val habit: Habit, val date: LocalDate, val status: EntryStatus?) {
+public data class YesterdayItem(
+    val habit: Habit,
+    val date: LocalDate,
+    val status: EntryStatus?,
+    /** How much of a counted habit was logged. Null for other habits and unlogged days. */
+    val amount: Double? = null,
+) {
     public val isDone: Boolean get() = status?.isCompletion == true
 }
+
+/** A counted habit's day whose amount is being typed. [date] is fixed when the dialog opens. */
+internal data class AmountRequest(val habit: Habit, val date: LocalDate, val initial: Double?)
 
 /** The small set of things Today is allowed to say about a miss. There is no fourth option. */
 public enum class GentleNote {
@@ -135,4 +146,8 @@ public data class TodayActions(
     val onNote: (String, String) -> Unit = { _, _ -> },
     /** Sets a day other than today, such as yesterday. A null status clears it. */
     val onSetDay: (String, LocalDate, EntryStatus?) -> Unit = { _, _, _ -> },
+    /** Adds one to today's amount of a counted habit. */
+    val onAddOne: (String) -> Unit = {},
+    /** Sets a counted habit's amount on a day, today or yesterday. */
+    val onSetAmount: (String, LocalDate, Double) -> Unit = { _, _, _ -> },
 )

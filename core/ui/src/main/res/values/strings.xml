@@ -38,6 +38,21 @@
     <string name="action_minimum">Did the smallest version</string>
     <string name="action_clear">Clear today</string>
 
+    <!--
+      Counted habits. %1$s is the amount logged; %2$s is the target or limit with its unit,
+      built from amount_with_unit. Over the limit reads the same as under it: a number, no verdict.
+    -->
+    <string name="amount_with_unit">%1$s %2$s</string>
+    <string name="amount_of_target">%1$s of %2$s</string>
+    <string name="amount_of_limit">%1$s, limit %2$s</string>
+    <string name="amount_limit_unlogged">Limit %1$s</string>
+    <string name="amount_label">Amount</string>
+    <string name="action_add_one">Add one</string>
+    <string name="action_enter_amount">Enter amount</string>
+    <!-- Logs zero on a cut-down habit, which is a done day. -->
+    <string name="action_none_today">None today</string>
+    <string name="amount_today">Today</string>
+
     <!-- Shown after a skip so the gesture visibly did something. Stated, never scolded. -->
     <string name="status_skipped">Skipped today</string>
     <string name="action_close">Close</string>
@@ -50,6 +65,7 @@
     <string name="day_status_minimum">Done, smallest version</string>
     <string name="day_status_skipped">Skipped</string>
     <string name="day_status_lapse">Slip logged</string>
+    <string name="day_status_partial">Part done</string>
     <string name="day_mark_skipped">Mark skipped</string>
     <string name="day_clear">Clear this day</string>
     <!-- Heading for habits due yesterday, shown on Today until noon. It names the day, never a miss. -->
@@ -125,10 +141,13 @@
     <string name="create_name_hint">Morning run</string>
     <string name="create_type_do">Do it</string>
     <string name="create_type_count">Count it</string>
+    <string name="create_type_reduce">Cut down</string>
     <string name="create_type_avoid">Avoid it</string>
     <string name="create_unit_label">Unit</string>
     <string name="create_unit_hint">pages</string>
+    <string name="create_reduce_unit_hint">coffees</string>
     <string name="create_target_label">Daily target</string>
+    <string name="create_ceiling_label">Daily limit</string>
     <string name="create_identity_label">I\'m someone who…</string>
     <string name="create_identity_hint">runs in the morning</string>
     <string name="create_identity_help">How strongly people tie a habit to who they are predicts whether they keep it.</string>
@@ -280,6 +299,7 @@
     <string name="detail_legend_done">Done</string>
     <string name="detail_legend_missed">Missed</string>
     <string name="detail_legend_skipped">Skipped</string>
+    <string name="detail_legend_partial">Part done</string>
 
     <string name="detail_plan_title">The plan</string>
     <!-- The stored halves are situations; the "if… then" sentence around them is copy, so it
